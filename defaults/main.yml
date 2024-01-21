@@ -144,7 +144,7 @@ promtail_config_clients_additionnal: []
 promtail_default_loki_client_enabled: "{{ true if loki_enabled else false }}"
 promtail_loki_server_url: "{{ loki_identifier + ':3100' if loki_enabled else 'http://127.0.0.1:3100' }}"
 promtail_default_loki_client: 
-  - url: "{{ promtail_loki_server_url }}/loki/api/v1/push"
+  - url: "http://{{ promtail_loki_server_url }}/loki/api/v1/push"
 
 # Positions config
 promtail_config_positions: 
