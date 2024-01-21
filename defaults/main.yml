@@ -18,14 +18,15 @@ promtail_data_path: "{{ promtail_base_path }}/data"
 # promtail_container_additional_mounts:
 # - "type=bind|volume|tmpfs,source=/outside,target=/inside,readonly,bind-propagation=slave"
 promtail_container_additional_mounts: [ promtail_container_additional_mounts_default + promtail_container_additional_mounts_custom]
+promtail_container_additional_mounts_custom: []
 promtail_container_additional_mounts_default: |
   {{
     (promtail_container_journald_volume if promtail_journald_scraper_enabled else [])
   +
-    (promtail_container_ssh_volume if promtail_ssh_scraper_enabled else [])
+    (promtail_container_system_volume if promtail_system_scraper_enabled else [])
   }}
 promtail_container_journald_volume: "type=bind,source=/var/log/journal,target=/data/journal,readonly"
-promtail_container_ssh_volume: "type=bind,source=/var/log/secure,target=/data/ssh,readonly"
+promtail_container_system_volume: "type=bind,source=/var/log,target=/data/system,readonly"
 
 promtail_systemd_required_services_list: ['docker.service']
 
@@ -50,7 +51,7 @@ promtail_container_http_host_bind_port: ""
 
 # The ports promtail will use for http/grpc inside the container
 promtail_container_http_port: "9080"
-promtail_container_grpc_port: "9096"
+promtail_container_grpc_port: "0"
 
 # promtail_basic_auth_enabled controls whether HTTP Basic Auth is enabled.
 # Also see `promtail_container_label_basicauth_users`.
@@ -137,7 +138,7 @@ promtail_config_scrape_default: |
   {{
     (promtail_journald_scraper_scrape_configs if promtail_journald_scraper_enabled else [])
   +
-    (promtail_ssh_scraper_scrape_configs if promtail_ssh_scraper_enabled else [])
+    (promtail_system_scraper_scrape_configs if promtail_system_scraper_enabled else [])
   }}
 promtail_config_scrape_auto: []
 promtail_config_scrape_additional: []
@@ -167,17 +168,42 @@ promtail_journald_scraper_scrape_configs: |
           selector:  '{unit="mash-promtail.service"}' #TODO var unit
           action: drop
 
-promtail_ssh_scraper_enabled: true 
-# The default configs for the ssh scraper
-promtail_ssh_scraper_scrape_configs: |
-  - job_name: ssh
-    static_configs:
-    - localhost
-      __path__: /data/ssh
-      labels:
-        job: ssh
+promtail_system_scraper_enabled: false
+# The default configs for the system scraper
+promtail_system_scraper_scrape_configs: | # TODO modify with whole system logs
+ - job_name: system
+    pipeline_stages:
+      - match:
+          selector: '{filename=~".*fail2ban.log"}'
+          stages:
+            - regex:
+                expression:
+                  "(?P<time>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2},\\d{0,3})?\\D?
+                  (?P<message>fail2ban.*(?P<pid>\\[\\d*\\]: )(?P<level>[A-Z]{4,7}) .*
+                  (?:(?:\\[|Jail ')(?P<jail>\\D*)(?:\\]|'))?.*)"
+            - template:
+                source: message
+                template: '{{ Replace .Value .pid "" -1 }}'
+            - regex:
+                expression: '(?P<message>.*)(?: - \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})'
+                source: message
+            - template:
+                source: time
+                template: '{{ Replace .Value "," "." -1 }}'
+            - timestamp:
+                source: time
+                format: "2006-01-02 15:04:05.000"
+            - output:
+                source: message
 
-# Target config
+
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: varlogs
+          __path__: /data/system/**/**log# Target config
+
 promtail_target_config: []
 
 # Clients config

@@ -1,5 +1,5 @@
 # Promtail Ansible Role
-
+**WIP role, use with caution**  
 [promtail](https://grafana.com/oss/promtail/) is a log aggregation system designed to store and query logs from all your applications and infrastructure. This role helps you to set up promtail:
 
 - with everything run in [Docker](https://www.docker.com/) containers
@@ -43,8 +43,36 @@ promtail_hostname: promtail.example.org
 # promtail_basic_auth_username: ''
 # promtail_basic_auth_password: ''
 ```
+### Scraping logs
+#### Default scraping behavior
+By default, promtail will scrape systemd-journald annd ssh logs you can enable/disable this behavior by setting :
+
+```
+promtail_journald_scraper_enabled: false
+promtail_ssh_scraper_enabled: false
+```
+#### Scraping other logs
+*Exemple with ssh:*  
+
+Use ``promtail_container_additional_mounts_custom`` to add volumes to monitor:
+```
+promtail_container_additional_mounts_custom:
+ - "type=bind,source=/var/log/secure,target=/data/ssh,readonly"
+```
+
+
+Use ``promtail_config_scrape_additional`` to define your scraping configuration:
+```
+promtail_config_scrape_additional: |
+  - job_name: ssh
+    static_configs:
+    - localhost
+      __path__: /data/ssh
+      labels:
+        job: ssh
+```
 
 ## Usage
 
-After [installing](../installing.md), refer to the [official documentation](https://grafana.com/docs/promtail/latest/reference/api/#post-promtailapiv1push) to send logs throught promtail's API without an agent.
-The [Promtail agent](https://grafana.com/docs/promtail/latest/send-data/promtail/) is coming soon
+After [installing](../installing.md), ...
+
