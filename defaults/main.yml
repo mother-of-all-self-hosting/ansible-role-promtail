@@ -89,6 +89,9 @@ promtail_container_labels_traefik_additional_response_headers_auto: |
   }}
 promtail_container_labels_traefik_additional_response_headers_custom: {}
 
+# the Role use tmpfs to store positions in  promtail_config_positions
+promtail_tmpfs_size: "512m"
+
 # A list of additional "mounts" to be mounted in the container.
 # Contains definition objects like this:
 # promtail_container_additional_mounts:
@@ -124,85 +127,11 @@ promtail_configuration_extension: "{{ promtail_configuration_extension_yaml | fr
 # You most likely don't need to touch this variable. Instead, see `promtail_configuration_yaml`.
 promtail_configuration: "{{ promtail_configuration_yaml | from_yaml | combine(promtail_configuration_extension, recursive=True) }}"
 
-
 # Controls the scrape_configs configuration parameter
-promtail_config_scrape: "{{ promtail_config_scrape_default + promtail_config_scrape_auto + promtail_config_scrape_additional }}"
-promtail_config_scrape_default: |
-  {{
-    (promtail_journald_scraper_scrape_configs if promtail_journald_scraper_enabled else [] )
-  +
-    (promtail_system_scraper_scrape_configs if promtail_system_scraper_enabled else [] )
-  }}
-promtail_config_scrape_auto: []
-promtail_config_scrape_additional: []
+promtail_config_scrape: []
+promtail_journald_scraper_enabled: true  # Not working ... maybe due to systemd/journald version on my system
+promtail_system_scraper_enabled: true
 
-
-promtail_journald_scraper_enabled: true
-# The default configs for the systemd-journald scraper
-promtail_journald_scraper_scrape_configs:
-  - job_name: journal
-    journal:
-      json: false
-      max_age: 12h
-      path: /data/journal
-      labels:
-        job: systemd-journal
-    relabel_configs:
-      - source_labels: ["__journal__systemd_unit"]
-        target_label: "unit"
-      - source_labels: ["__journal__hostname"]
-        target_label: host
-      - source_labels: ["__journal_priority_keyword"]
-        target_label: level
-      - source_labels: ["__journal_syslog_identifier"]
-        target_label: syslog_identifier
-    pipeline_stages:
-      - match:
-          selector:  '{unit="mash-promtail.service"}' #TODO var unit
-          action: drop
-#  promtail_config_scrape_configs:
-#    - job_name: system
-#      entry_parser: raw
-#      static_configs:
-#      - targets:
-#          - localhost
-#        labels:
-#          job: varlogs
-#          host: {{ ansible_hostname }}
-#          __path__: /var/log/*log
-promtail_system_scraper_enabled: false
-# The default configs for the system scraper
-promtail_system_scraper_scrape_configs: [] #|
-#   - job_name: system
-#     pipeline_stages:
-#     - match:
-#       selector: '{filename=~".*fail2ban.log"}'
-#       stages:
-#         - regex:
-#           expression:
-#             "(?P<time>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2},\\d{0,3})?\\D?
-#             (?P<message>fail2ban.*(?P<pid>\\[\\d*\\]: )(?P<level>[A-Z]{4,7}) .*
-#             (?:(?:\\[|Jail ')(?P<jail>\\D*)(?:\\]|'))?.*)"
-#         - template:
-#           source: message
-#           template: '{{ Replace .Value .pid "" -1 }}'
-#         - regex:
-#           expression: '(?P<message>.*)(?: - \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})'
-#           source: message
-#         - template:
-#           source: time
-#           template: '{{ Replace .Value "," "." -1 }}'
-#         - timestamp:
-#           source: time
-#           format: "2006-01-02 15:04:05.000"
-#         - output:
-#           source: message
-#     static_configs:
-#       - targets:
-#         - localhost
-#         labels:
-#           job: varlogs
-#           __path__: /data/system/**/**log
 
 # Target config
 promtail_target_config: {}
@@ -213,7 +142,7 @@ promtail_config_clients_additionnal: []
 
 # Default Loki client
 promtail_default_loki_client_enabled: "{{ true if loki_enabled else false }}"
-promtail_loki_server_url: "{{ loki_identifier + ':3100' if loki_enabled else 'http://127.0.0.1:3100' }}" # remove else ?
+promtail_loki_server_url: "{{ loki_identifier + ':3100' if loki_enabled else 'http://127.0.0.1:3100' }}"
 promtail_default_loki_client: 
   - url: "{{ promtail_loki_server_url }}/loki/api/v1/push"
 

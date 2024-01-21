@@ -11,6 +11,37 @@ clients:
   {{ promtail_config_clients | to_nice_yaml(indent=2) | indent(2, False) }}
 
 scrape_configs:
+  {% if promtail_system_scraper_enabled %}
+  - job_name: system
+    static_configs:
+    - targets:
+      - localhost
+      labels:
+        __path__: /var/log/**/*log
+        job: varlogs
+  {% endif %}
+  {% if promtail_journald_scraper_enabled %}
+  - job_name: journal
+    journal:
+      json: false
+      max_age: 12h
+      path: /data/journal
+      labels:
+        job: systemd-journal
+    relabel_configs:
+      - source_labels: ["__journal__systemd_unit"]
+        target_label: "unit"
+      - source_labels: ["__journal__hostname"]
+        target_label: host
+      - source_labels: ["__journal_priority_keyword"]
+        target_label: level
+      - source_labels: ["__journal_syslog_identifier"]
+        target_label: syslog_identifier
+    pipeline_stages:
+      - match:
+          selector:  '{unit="mash-promtail.service"}'
+          action: drop
+  {% endif %}
   {% if promtail_config_scrape |length %}
   {{ promtail_config_scrape | to_nice_yaml(indent=2, width=2147483647) | indent(2, False) }}
   {% endif %}
