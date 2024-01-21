@@ -16,7 +16,7 @@
 - name: Ensure promtail.yml installed
   ansible.builtin.copy:
     content: "{{ promtail_configuration | to_nice_yaml(indent=2, width=999999) }}"
-    dest: "{{ promtail_config_path }}/local-config.yaml"
+    dest: "{{ promtail_config_path }}/config.yml"
     mode: 0644
     owner: "{{ promtail_uid }}"
     group: "{{ promtail_gid }}"
@@ -30,7 +30,6 @@
     mode: 0640
   with_items:
     - labels
-    - env
 
 - name: Ensure promtail network is created in Docker
   community.docker.docker_network:
