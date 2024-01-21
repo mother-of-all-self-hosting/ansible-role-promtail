@@ -17,7 +17,7 @@ scrape_configs:
     - targets:
       - localhost
       labels:
-        __path__: /var/log/**/*log
+        __path__: /var/log/*log
         job: varlogs
   {% endif %}
   {% if promtail_journald_scraper_enabled %}
