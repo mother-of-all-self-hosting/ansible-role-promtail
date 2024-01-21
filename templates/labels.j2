@@ -1,0 +1,35 @@
+{% if promtail_container_labels_traefik_enabled %}
+traefik.enable=true
+
+{% if promtail_container_labels_traefik_docker_network %}
+traefik.docker.network={{ promtail_container_labels_traefik_docker_network }}
+{% endif %}
+
+traefik.http.services.{{ promtail_identifier }}.loadbalancer.server.port={{ promtail_container_http_port }}
+
+{% set middlewares = [] %}
+
+{% if promtail_basic_auth_enabled %}
+traefik.http.middlewares.{{ promtail_identifier }}-auth.basicauth.users={{ promtail_container_label_basicauth_users }}
+{% set middlewares = middlewares + [promtail_identifier + '-auth@docker'] %}
+{% endif %}
+
+traefik.http.middlewares.{{ promtail_identifier }}-strip-prefix.stripprefix.prefixes={{ promtail_path_prefix }}
+{% set middlewares = middlewares + [promtail_identifier + '-strip-prefix@docker'] %}
+
+traefik.http.routers.{{ promtail_identifier }}.rule={{ promtail_container_labels_traefik_rule }}
+{% if middlewares | length > 0 %}
+traefik.http.routers.{{ promtail_identifier }}.middlewares={{ middlewares | join(',') }}
+{% endif %}
+traefik.http.routers.{{ promtail_identifier }}.service={{ promtail_identifier }}
+traefik.http.routers.{{ promtail_identifier }}.priority={{ promtail_container_labels_traefik_priority }}
+traefik.http.routers.{{ promtail_identifier }}.tls={{ promtail_container_labels_traefik_tls | to_json }}
+{% if promtail_container_labels_traefik_tls %}
+traefik.http.routers.{{ promtail_identifier }}.tls.certResolver={{ promtail_container_labels_traefik_tls_certResolver }}
+{% endif %}
+traefik.http.routers.{{ promtail_identifier }}.entrypoints={{ promtail_container_labels_traefik_entrypoints }}
+{% endif %}
+traefik.http.services.{{ promtail_identifier }}.loadbalancer.server.port={{ promtail_container_http_port }}
+
+
+{{ promtail_container_labels_additional_labels }}

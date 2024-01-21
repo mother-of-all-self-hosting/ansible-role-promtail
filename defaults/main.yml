@@ -1,0 +1,198 @@
+---
+
+promtail_enabled: true
+promtail_identifier: promtail
+
+promtail_hostname: ''
+promtail_path_prefix: '/'
+
+promtail_uid: ''
+promtail_gid: ''
+
+promtail_base_path: "/{{ promtail_identifier }}"
+promtail_config_path: "{{ promtail_base_path }}/config"
+promtail_data_path: "{{ promtail_base_path }}/data"
+
+# A list of additional "mounts" to be mounted in the container.
+# Contains definition objects like this:
+# promtail_container_additional_mounts:
+# - "type=bind|volume|tmpfs,source=/outside,target=/inside,readonly,bind-propagation=slave"
+promtail_container_additional_mounts: [ promtail_container_additional_mounts_default + promtail_container_additional_mounts_custom]
+promtail_container_additional_mounts_default: |
+  {{
+    (promtail_container_journald_volume if promtail_journald_scraper_enabled else [])
+  +
+    (promtail_container_ssh_volume if promtail_ssh_scraper_enabled else [])
+  }}
+promtail_container_journald_volume: "type=bind,source=/var/log/journal,target=/data/journal,readonly"
+promtail_container_ssh_volume: "type=bind,source=/var/log/secure,target=/data/ssh,readonly"
+
+promtail_systemd_required_services_list: ['docker.service']
+
+promtail_version: 2.9.2
+
+promtail_container_image: "{{ promtail_container_image_registry_prefix }}grafana/promtail:{{ promtail_container_image_tag }}"
+promtail_container_image_registry_prefix: docker.io/
+promtail_container_image_tag: "{{ promtail_version }}"
+promtail_container_image_force_pull: "{{ promtail_container_image.endswith(':latest') }}"
+
+promtail_container_network: '{{ promtail_identifier }}'
+
+# A list of additional container networks that the container would be connected to.
+# The role does not create these networks, so make sure they already exist.
+# Use this to expose this container to a reverse proxy, which runs in a different container network and influxdb.
+promtail_container_additional_networks: []
+
+# Controls whether the promtail container exposes its HTTP port.
+#
+# Takes an "<ip>:<port>" or "<port>" value (e.g. "127.0.0.1:9080"), or empty string to not expose.
+promtail_container_http_host_bind_port: ""
+
+# The ports promtail will use for http/grpc inside the container
+promtail_container_http_port: "9080"
+promtail_container_grpc_port: "9096"
+
+# promtail_basic_auth_enabled controls whether HTTP Basic Auth is enabled.
+# Also see `promtail_container_label_basicauth_users`.
+promtail_basic_auth_enabled: false
+promtail_basic_auth_username: ''
+promtail_basic_auth_password: ''
+# promtail_container_label_basicauth_users is populated at runtime based on
+# promtail_basic_auth_username and promtail_basic_auth_password
+promtail_container_label_basicauth_users: ''
+promtail_basic_auth_apache_container_image: "{{ promtail_basic_auth_apache_container_image_registry_prefix }}httpd:{{ promtail_basic_auth_apache_container_image_tag }}"
+promtail_basic_auth_apache_container_image_tag: "2.4.56-alpine3.17"
+promtail_basic_auth_apache_container_image_force_pull: "{{ promtail_basic_auth_apache_container_image.endswith(':latest') }}"
+promtail_basic_auth_apache_container_image_registry_prefix: docker.io/
+
+# promtail_container_labels_traefik_enabled controls whether labels to assist a Traefik reverse-proxy will be attached to the container.
+# See `../templates/labels.j2` for details.
+#
+# To inject your own other container labels, see `promtail_container_labels_additional_labels`.
+promtail_container_labels_traefik_enabled: false
+promtail_container_labels_traefik_docker_network: "{{ promtail_container_network }}"
+promtail_container_labels_traefik_hostname: "{{ promtail_hostname }}"
+# The path prefix must either be `/` or not end with a slash (e.g. `/promtail`).
+promtail_container_labels_traefik_path_prefix: "{{ promtail_path_prefix }}"
+promtail_container_labels_traefik_rule: "Host(`{{ promtail_container_labels_traefik_hostname }}`){% if promtail_container_labels_traefik_path_prefix != '/' %} && PathPrefix(`{{ promtail_container_labels_traefik_path_prefix }}`){% endif %}"
+promtail_container_labels_traefik_priority: 0
+promtail_container_labels_traefik_entrypoints: web-secure
+promtail_container_labels_traefik_tls: "{{ promtail_container_labels_traefik_entrypoints != 'web' }}"
+promtail_container_labels_traefik_tls_certResolver: default  # noqa var-naming
+
+# promtail_container_labels_additional_labels contains a multiline string with additional labels to add to the container label file.
+# See `../templates/labels.j2` for details.
+#
+# Example:
+# promtail_container_labels_additional_labels: |
+#   my.label=1
+#   another.label="here"
+promtail_container_labels_additional_labels: ''
+
+# Controls which additional headers to attach to all HTTP requests.
+# To add your own custom request headers, use `promtail_container_labels_traefik_additional_response_headers_custom`
+promtail_container_labels_traefik_additional_request_headers: "{{ promtail_container_labels_traefik_additional_request_headers_auto | combine(promtail_container_labels_traefik_additional_request_headers_custom) }}"
+promtail_container_labels_traefik_additional_request_headers_auto: {}
+promtail_container_labels_traefik_additional_request_headers_custom: {}
+
+# Controls which additional headers to attach to all HTTP responses.
+# To add your own custom response headers, use `promtail_container_labels_traefik_additional_response_headers_custom`
+promtail_container_labels_traefik_additional_response_headers: "{{ promtail_container_labels_traefik_additional_response_headers_auto | combine(promtail_container_labels_traefik_additional_response_headers_custom) }}"
+promtail_container_labels_traefik_additional_response_headers_auto: |
+  {{
+    {}
+    | combine ({'X-XSS-Protection': promtail_http_header_xss_protection} if promtail_http_header_xss_protection else {})
+    | combine ({'X-Frame-Options': promtail_http_header_frame_options} if promtail_http_header_frame_options else {})
+    | combine ({'X-Content-Type-Options': promtail_http_header_content_type_options} if promtail_http_header_content_type_options else {})
+    | combine ({'Content-Security-Policy': promtail_http_header_content_security_policy} if promtail_http_header_content_security_policy else {})
+    | combine ({'Permission-Policy': promtail_http_header_content_permission_policy} if promtail_http_header_content_permission_policy else {})
+    | combine ({'Strict-Transport-Security': promtail_http_header_strict_transport_security} if promtail_http_header_strict_transport_security and promtail_container_labels_traefik_tls else {})
+  }}
+promtail_container_labels_traefik_additional_response_headers_custom: {}
+
+
+
+# For a more advanced customization, you can extend the default (see `promtail_configuration_extension_yaml`)
+# or completely replace this variable with your own template.
+promtail_configuration_yaml: "{{ lookup('template', 'templates/config.yml.j2') }}"
+
+promtail_configuration_extension_yaml: |
+  # This configuration extends the default starting configuration (`promtail_configuration_yaml`).
+  #
+  # You can override individual variables from the default configuration, or introduce new ones.
+  #
+  # If you need something more special, you can take full control by
+  # completely redefining `promtail_configuration_yaml`.
+
+promtail_configuration_extension: "{{ promtail_configuration_extension_yaml | from_yaml if promtail_configuration_extension_yaml | from_yaml is mapping else {} }}"
+
+# Holds the final borgmatic configuration (a combination of the default and its extension).
+# You most likely don't need to touch this variable. Instead, see `promtail_configuration_yaml`.
+promtail_configuration: "{{ promtail_configuration_yaml | from_yaml | combine(promtail_configuration_extension, recursive=True) }}"
+
+
+# Controls the scrape_configs configuration parameter
+promtail_config_scrape: "{{ promtail_config_scrape_default + promtail_config_scrape_auto + promtail_config_scrape_additional }}"
+promtail_config_scrape_default: |
+  {{
+    (promtail_journald_scraper_scrape_configs if promtail_journald_scraper_enabled else [])
+  +
+    (promtail_ssh_scraper_scrape_configs if promtail_ssh_scraper_enabled else [])
+  }}
+promtail_config_scrape_auto: []
+promtail_config_scrape_additional: []
+
+
+promtail_journald_scraper_enabled: true
+# The default configs for the systemd-journald scraper
+promtail_journald_scraper_scrape_configs: |
+  - job_name: journal
+    journal:
+      json: false
+      max_age: 12h
+      path: /data/journal
+      labels:
+        job: systemd-journal
+    relabel_configs:
+      - source_labels: ["__journal__systemd_unit"]
+        target_label: "unit"
+      - source_labels: ["__journal__hostname"]
+        target_label: host
+      - source_labels: ["__journal_priority_keyword"]
+        target_label: level
+      - source_labels: ["__journal_syslog_identifier"]
+        target_label: syslog_identifier
+    pipeline_stages:
+      - match:
+          selector:  '{unit="mash-promtail.service"}' #TODO var unit
+          action: drop
+
+promtail_ssh_scraper_enabled: true 
+# The default configs for the ssh scraper
+promtail_ssh_scraper_scrape_configs: |
+  - job_name: ssh
+    static_configs:
+    - localhost
+      __path__: /data/ssh
+      labels:
+        job: ssh
+
+# Target config
+promtail_target_config: []
+
+# Clients config
+promtail_config_clients: "{{ promtail_default_loki_client if promtail_default_loki_client_enabled else [] +  promtail_config_clients_additionnal }}"
+promtail_config_clients_additionnal: []
+
+# Default Loki client 
+promtail_default_loki_client_enabled: "{{ true if loki_enabled else false }}"
+promtail_loki_server_url: "{{ loki_identifier + ':3100' if loki_enabled else 'http://127.0.0.1:3100' }}" # remove else ?
+promtail_default_loki_client: "- url: {{ promtail_loki_server_url }}/loki/api/v1/push"
+
+# Positions config
+promtail_config_positions: "filename: /tmp/positions.yml"
+
+# Servers config
+promtail_config_server: |
+  http_listen_port: {{ promtail_container_http_port }}
+  grpc_listen_port: {{ promtail_container_grpc_port }}

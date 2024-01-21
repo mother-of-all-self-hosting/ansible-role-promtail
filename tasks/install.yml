@@ -1,0 +1,49 @@
+---
+
+- name: Ensure promtail path exists
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    mode: 0700
+    owner: "{{ promtail_uid }}"
+    group: "{{ promtail_gid }}"
+  with_items:
+    - {path: "{{ promtail_base_path }}", when: true}
+    - {path: "{{ promtail_config_path }}", when: true}
+    - {path: "{{ promtail_data_path }}", when: true}
+
+
+- name: Ensure promtail.yml installed
+  ansible.builtin.copy:
+    content: "{{ promtail_configuration | to_nice_yaml(indent=2, width=999999) }}"
+    dest: "{{ promtail_config_path }}/local-config.yaml"
+    mode: 0644
+    owner: "{{ promtail_uid }}"
+    group: "{{ promtail_gid }}"
+
+- name: Ensure promtail support files created
+  ansible.builtin.template:
+    src: "{{ role_path }}/templates/{{ item }}.j2"
+    dest: "{{ promtail_base_path }}/{{ item }}"
+    owner: "{{ promtail_uid }}"
+    group: "{{ promtail_gid }}"
+    mode: 0640
+  with_items:
+    - labels
+    - env
+
+- name: Ensure promtail network is created in Docker
+  community.docker.docker_network:
+    name: "{{ promtail_container_network }}"
+    driver: bridge
+
+- name: Ensure promtail container image is pulled
+  community.docker.docker_image:
+    name: "{{ promtail_container_image }}"
+    source: "{{ 'pull' if ansible_version.major > 2 or ansible_version.minor > 7 else omit }}"
+
+- name: Ensure promtail.service installed
+  ansible.builtin.template:
+    src: "{{ role_path }}/templates/systemd/promtail.service.j2"
+    dest: "{{ devture_systemd_docker_base_systemd_path }}/{{ promtail_identifier }}.service"
+    mode: 0644
