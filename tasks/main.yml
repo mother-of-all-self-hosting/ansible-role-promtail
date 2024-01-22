@@ -1,26 +1,25 @@
 ---
 
-- block:
+- name: Run Promtail installation tasks
+  tags:
+    - setup-all
+    - setup-promtail
+    - install-all
+    - install-promtail
+  block:
     - when: promtail_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/validate_config.yml"
-  tags:
-    - setup-all
-    - setup-promtail
-    - install-all
-    - install-promtail
 
-- block:
+    - when: promtail_enabled | bool
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/prepare_basic_auth.yml"
+
     - when: promtail_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
+
+- name: Run Promtail uninstallation tasks
   tags:
     - setup-all
     - setup-promtail
-    - install-all
-    - install-promtail
-
-- block:
+  block:
     - when: not promtail_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"
-  tags:
-    - setup-all
-    - setup-promtail
