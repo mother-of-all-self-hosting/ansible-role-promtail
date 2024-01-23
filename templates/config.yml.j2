@@ -17,7 +17,7 @@ scrape_configs:
     - targets:
       - localhost
       labels:
-        __path__: /var/log/*log
+        __path__: /data/system/*log
         job: varlogs
   {% endif %}
   {% if promtail_journald_scraper_enabled %}
@@ -41,6 +41,26 @@ scrape_configs:
       - match:
           selector:  '{unit="mash-promtail.service"}'
           action: drop
+  {% endif %}
+  {% if promtail_syslog_scraper_enabled %}
+  - job_name: syslog
+    syslog:
+      listen_address: 0.0.0.0:1514
+      labels:
+        job: syslog
+    relabel_configs:
+      - source_labels: [__syslog_message_hostname]
+        target_label: host
+      - source_labels: [__syslog_message_hostname]
+        target_label: hostname
+      - source_labels: [__syslog_message_severity]
+        target_label: level
+      - source_labels: [__syslog_message_app_name]
+        target_label: application
+      - source_labels: [__syslog_message_facility]
+        target_label: facility
+      - source_labels: [__syslog_connection_hostname]
+        target_label: connection_hostname
   {% endif %}
   {% if promtail_config_scrape |length %}
   {{ promtail_config_scrape | to_nice_yaml(indent=2, width=2147483647) | indent(2, False) }}

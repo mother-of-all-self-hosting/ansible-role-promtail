@@ -22,6 +22,9 @@ ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
                 {% if promtail_container_http_host_bind_port %}
                 -p {{ promtail_container_http_host_bind_port }}:{{ promtail_container_http_port }} \
                 {% endif %}
+                {% for port in promtail_container_bind_ports %}
+                -p {{ port[0] }}:{{ port[1] }} \
+                {% endfor %}
                 --label-file={{ promtail_base_path }}/labels \
                 --mount type=bind,src={{ promtail_data_path }},dst=/promtail \
                 --mount type=bind,src={{ promtail_config_path }},dst=/etc/promtail/ \
