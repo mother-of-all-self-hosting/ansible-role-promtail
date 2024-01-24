@@ -34,10 +34,12 @@ promtail_container_additional_networks: []
 # Takes an "<ip>:<port>" or "<port>" value (e.g. "127.0.0.1:9080"), or empty string to not expose.
 promtail_container_http_host_bind_port: ""
 
-# List port to bind to container 
+# List additional ports to bind to container 
 # Should be defined as :
 # - [<host_port>,<container_port>]
-promtail_container_bind_ports: []
+# or
+# - [<host_ip>:<host_port>,<container_port>]
+promtail_container_additionnal_bind_ports: []
 
 # The ports promtail will use for http/grpc inside the container
 promtail_container_http_port: 9080
@@ -114,13 +116,13 @@ promtail_container_additional_mounts_default: |
   {{
     (promtail_container_journald_volume if promtail_journald_scraper_enabled else [])
   +
-    (promtail_container_system_volume if promtail_system_scraper_enabled else [])
+    (promtail_container_varlog_volume if promtail_varlog_scraper_enabled else [])
   }}
 promtail_container_journald_volume: 
   - "type=bind,source=/var/log/journal,target=/data/journal,readonly"
   - "type=bind,source=/etc/machine-id,target=/etc/machine-id,readonly"
-promtail_container_system_volume: 
-  - "type=bind,source=/var/log,target=/data/system,readonly"
+promtail_container_varlog_volume: 
+  - "type=bind,source=/var/log,target=/data/varlog,readonly"
 
 # For a more advanced customization, you can extend the default (see `promtail_configuration_extension_yaml`)
 # or completely replace this variable with your own template.
@@ -133,28 +135,48 @@ promtail_configuration_extension_yaml: |
   #
   # If you need something more special, you can take full control by
   # completely redefining `promtail_configuration_yaml`.
-
 promtail_configuration_extension: "{{ promtail_configuration_extension_yaml | from_yaml if promtail_configuration_extension_yaml | from_yaml is mapping else {} }}"
 
-# Holds the final borgmatic configuration (a combination of the default and its extension).
+# Holds the final configuration (a combination of the default and its extension).
 # You most likely don't need to touch this variable. Instead, see `promtail_configuration_yaml`.
 promtail_configuration: "{{ promtail_configuration_yaml | from_yaml | combine(promtail_configuration_extension, recursive=True) }}"
 
 # Controls the scrape_configs configuration parameter
-promtail_config_scrape: []
-#TODO write target config in default/main.yml instead of template/config.yml.j2
-#TODO depersonalize config by using more vars 
-promtail_journald_scraper_enabled: true  # Not working on my system
-promtail_system_scraper_enabled: true
-# You need to edit syslog-ng or rsyslog to forward logs to <promtail_container>:<promtail_syslog_listening_port> 
-# Simple exemple of configuration for rsyslog:
-# *.* action(type="omfwd" protocol="tcp" target="<promtail_host>" port="<promtail_port>" Template="RSYSLOG_SyslogProtocol23Format" TCP_Framing="octet-counted" KeepAlive="on")
-# You also need to use  promtail_container_bind_ports to bind host port 1514 to container port 1514 (or use an other way like using <container_ip>:<container_port>) 
-promtail_syslog_scraper_enabled: true #TODO use var for port 
+promtail_config_scrape: "{{ '\n'.join((promtail_config_scrape_default, promtail_config_scrape_additional)) }}"
+promtail_config_scrape_additional: ''
+promtail_config_scrape_default: "{{promtail_config_scrape_journald_default + '\n' if promtail_journald_scraper_enabled }}{{ promtail_config_scrape_varlog_default if promtail_varlog_scraper_enabled }}"
+promtail_journald_scraper_enabled: true
+promtail_config_scrape_journald_default: >-
+  - job_name: journal
+    journal:
+      json: false
+      max_age: 12h
+      path: /data/journal
+      labels:
+        job: systemd-journal
+    relabel_configs:
+      - source_labels: ["__journal__systemd_unit"]
+        target_label: "unit"
+      - source_labels: ["__journal__hostname"]
+        target_label: host
+      - source_labels: ["__journal_priority_keyword"]
+        target_label: level
+      - source_labels: ["__journal_syslog_identifier"]
+        target_label: syslog_identifier
+    pipeline_stages:
+      - match:
+          selector:  '{unit="{{ promtail_identifier }}.service"}'
+          action: drop
+promtail_varlog_scraper_enabled: true
+promtail_config_scrape_varlog_default: >-
+  - job_name: varlog
+    static_configs:
+    - targets:
+      - localhost
+      labels:
+        __path__: /data/varlog/**/*log
+        job: varlog
 
-
-# Target config
-promtail_target_config: {} #TODO use string instead ? 
 
 # Clients config
 promtail_config_clients: "{{ promtail_default_loki_client if promtail_default_loki_client_enabled else [] +  promtail_config_clients_additionnal }}"
@@ -174,3 +196,18 @@ promtail_config_positions:
 promtail_config_server:
   http_listen_port: "{{ promtail_container_http_port }}"
   grpc_listen_port: "{{ promtail_container_grpc_port }}"
+
+# Tracing support config
+promtail_config_tracing: ''
+
+# Configures global settings which impact all targets.
+promtail_config_global: ''
+
+# Global limits for this instance of Promtail
+promtail_config_limits: ''
+
+# Options config
+promtail_config_options: ''
+
+# Target config
+promtail_target_config: ''

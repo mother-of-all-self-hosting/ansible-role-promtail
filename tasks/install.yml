@@ -12,7 +12,6 @@
     - {path: "{{ promtail_config_path }}", when: true}
     - {path: "{{ promtail_data_path }}", when: true}
 
-
 - name: Ensure promtail.yml installed
   ansible.builtin.copy:
     content: "{{ promtail_configuration | to_nice_yaml(indent=2, width=999999) }}"
