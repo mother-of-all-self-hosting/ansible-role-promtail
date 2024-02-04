@@ -146,10 +146,12 @@ promtail_config_scrape_configs_custom: []
 #                                                                      #
 ########################################################################
 
-promtail_journald_scraper_enabled: true
+promtail_journald_scraper_enabled: false
+
+promtail_journald_scraper_host_path: /var/log/journal
 
 promtail_journald_scraper_container_additional_volumes:
-  - "type=bind,source=/var/log/journal,target=/var-log-journal,readonly"
+  - "type=bind,source={{ promtail_journald_scraper_host_path }},target=/scraper-journald,readonly"
   - "type=bind,source=/etc/machine-id,target=/etc/machine-id,readonly"
 
 promtail_journald_scraper_config:
@@ -157,7 +159,7 @@ promtail_journald_scraper_config:
     journal:
       json: false
       max_age: 12h
-      path: /var-log-journal
+      path: /scraper-journald
       labels:
         job: systemd-journal
     relabel_configs:
@@ -187,10 +189,12 @@ promtail_journald_scraper_config:
 #                                                                      #
 ########################################################################
 
-promtail_varlog_scraper_enabled: true
+promtail_varlog_scraper_enabled: false
+
+promtail_varlog_scraper_host_path: /var/log
 
 promtail_varlog_scraper_container_additional_volumes:
-  - "type=bind,source=/var/log,target=/var-log,readonly"
+  - "type=bind,source={{ promtail_varlog_scraper_host_path }},target=/scraper-varlog,readonly"
 
 promtail_varlog_scraper_config:
   - job_name: varlog
@@ -198,7 +202,7 @@ promtail_varlog_scraper_config:
     - targets:
       - localhost
       labels:
-        __path__: /var-log/**/*log
+        __path__: /scraper-varlog/**/*log
         job: varlog
 
 ########################################################################
