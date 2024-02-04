@@ -18,18 +18,21 @@ traefik.http.middlewares.{{ promtail_identifier }}-strip-prefix.stripprefix.pref
 {% set middlewares = middlewares + [promtail_identifier + '-strip-prefix@docker'] %}
 
 traefik.http.routers.{{ promtail_identifier }}.rule={{ promtail_container_labels_traefik_rule }}
+
 {% if middlewares | length > 0 %}
 traefik.http.routers.{{ promtail_identifier }}.middlewares={{ middlewares | join(',') }}
 {% endif %}
+
 traefik.http.routers.{{ promtail_identifier }}.service={{ promtail_identifier }}
 traefik.http.routers.{{ promtail_identifier }}.priority={{ promtail_container_labels_traefik_priority }}
+traefik.http.routers.{{ promtail_identifier }}.entrypoints={{ promtail_container_labels_traefik_entrypoints }}
+
 traefik.http.routers.{{ promtail_identifier }}.tls={{ promtail_container_labels_traefik_tls | to_json }}
 {% if promtail_container_labels_traefik_tls %}
 traefik.http.routers.{{ promtail_identifier }}.tls.certResolver={{ promtail_container_labels_traefik_tls_certResolver }}
 {% endif %}
-traefik.http.routers.{{ promtail_identifier }}.entrypoints={{ promtail_container_labels_traefik_entrypoints }}
+
 {% endif %}
-traefik.http.services.{{ promtail_identifier }}.loadbalancer.server.port={{ promtail_container_http_port }}
 
 
 {{ promtail_container_labels_additional_labels }}
