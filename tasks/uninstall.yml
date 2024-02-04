@@ -1,23 +1,24 @@
 ---
 
-- name: Check existence of promtail systemd service
+- name: Check existence of Promtail systemd service
   ansible.builtin.stat:
     path: "{{ devture_systemd_docker_base_systemd_path }}/{{ promtail_identifier }}.service"
   register: promtail_service_stat
 
 - when: promtail_service_stat.stat.exists | bool
   block:
-    - name: Ensure promtail service is stopped
+    - name: Ensure Promtail service is stopped
       ansible.builtin.service:
         name: "{{ promtail_identifier }}"
         state: stopped
         daemon_reload: true
-    - name: Ensure promtail service doesn't exist
+
+    - name: Ensure Promtail service doesn't exist
       ansible.builtin.file:
         dest: "{{ devture_systemd_docker_base_systemd_path }}/{{ promtail_identifier }}.service"
         state: absent
 
-    - name: Ensure promtail base path is files deleted (make sure to delete node data)
+    - name: Ensure Promtail base path is deleted
       ansible.builtin.file:
         path: "{{ promtail_base_path }}"
         state: absent
