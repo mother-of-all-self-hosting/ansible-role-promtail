@@ -1,5 +1,5 @@
 [Unit]
-Description=promtail log agent ({{ promtail_identifier }})
+Description=Promtail log agent ({{ promtail_identifier }})
 {% for service in promtail_systemd_required_services_list %}
 Requires={{ service }}
 After={{ service }}
