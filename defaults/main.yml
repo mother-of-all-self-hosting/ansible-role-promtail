@@ -130,14 +130,15 @@ promtail_configuration_extension: "{{ promtail_configuration_extension_yaml | fr
 promtail_configuration: "{{ promtail_configuration_yaml | from_yaml | combine(promtail_configuration_extension, recursive=True) }}"
 
 # Controls the scrape_configs configuration parameter
-promtail_config_scrape_configs: "{{ '\n'.join((promtail_config_scrape_configs_default, promtail_config_scrape_configs_auto, promtail_config_scrape_configs_custom)) }}"
-
+promtail_config_scrape_configs: "{{ promtail_config_scrape_configs_default + promtail_config_scrape_configs_auto + promtail_config_scrape_configs_custom }}"
 promtail_config_scrape_configs_default: |
-  {{ (promtail_journald_scraper_config + '\n' if promtail_journald_scraper_enabled else '') }}
-  {{ (promtail_varlog_scraper_config if promtail_varlog_scraper_enabled else '') }}
-
-promtail_config_scrape_configs_auto: ''
-promtail_config_scrape_configs_custom: ''
+  {{
+    (promtail_journald_scraper_config if promtail_journald_scraper_enabled else [])
+    +
+    (promtail_varlog_scraper_config if promtail_varlog_scraper_enabled else [])
+  }}
+promtail_config_scrape_configs_auto: []
+promtail_config_scrape_configs_custom: []
 
 ########################################################################
 #                                                                      #
@@ -151,7 +152,7 @@ promtail_journald_scraper_container_additional_volumes:
   - "type=bind,source=/var/log/journal,target=/var-log-journal,readonly"
   - "type=bind,source=/etc/machine-id,target=/etc/machine-id,readonly"
 
-promtail_journald_scraper_config: >-
+promtail_journald_scraper_config:
   - job_name: journal
     journal:
       json: false
@@ -170,7 +171,7 @@ promtail_journald_scraper_config: >-
         target_label: syslog_identifier
     pipeline_stages:
       - match:
-          selector:  '{unit="{{ promtail_identifier }}.service"}'
+          selector: '{unit="{{ promtail_identifier }}.service"}'
           action: drop
 
 ########################################################################
@@ -191,7 +192,7 @@ promtail_varlog_scraper_enabled: true
 promtail_varlog_scraper_container_additional_volumes:
   - "type=bind,source=/var/log,target=/var-log,readonly"
 
-promtail_varlog_scraper_config: >-
+promtail_varlog_scraper_config:
   - job_name: varlog
     static_configs:
     - targets:

@@ -8,7 +8,4 @@ positions:
 
 clients: {{ promtail_config_clients | to_json }}
 
-{% if promtail_config_scrape_configs | trim | length > 0 %}
-scrape_configs:
-{{ promtail_config_scrape_configs }}
-{% endif %}
+scrape_configs: {{ promtail_config_scrape_configs | to_json }}
