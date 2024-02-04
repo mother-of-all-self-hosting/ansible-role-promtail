@@ -14,6 +14,10 @@
     - {'old': 'promtail_default_loki_client_enabled', 'new': '<removed>'}
     - {'old': 'promtail_default_loki_client', 'new': '<removed>'}
     - {'old': 'promtail_loki_server_url', 'new': '<removed>'}
+    - {'old': 'promtail_config_scrape', 'new': 'promtail_config_scrape_configs'}
+    - {'old': 'promtail_config_scrape_additional', 'new': 'promtail_config_scrape_configs_custom'}
+    - {'old': 'promtail_config_scrape_varlog_default', 'new': 'promtail_varlog_scraper_config'}
+    - {'old': 'promtail_config_positions', 'new': '<superseded by promtail_config_positions_filename and promtail_configuration_extension_yaml>'}
 
 - name: Fail if required Promtail settings not defined
   ansible.builtin.fail:
@@ -23,7 +27,6 @@
   with_items:
     - {'name': 'promtail_container_labels_traefik_hostname', when: "{{ promtail_container_labels_traefik_enabled }}"}
     - {'name': 'promtail_container_labels_middleware_basic_auth_users', when: "{{ promtail_container_labels_middleware_basic_auth_enabled }}"}
-
 
 - name: Fail if no Promtail clients are defined
   ansible.builtin.fail:

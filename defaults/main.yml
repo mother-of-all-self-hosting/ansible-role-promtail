@@ -104,19 +104,15 @@ promtail_tmpfs_size: "512m"
 # Contains definition objects like this:
 # promtail_container_additional_mounts:
 # - "type=bind|volume|tmpfs,source=/outside,target=/inside,readonly,bind-propagation=slave"
-promtail_container_additional_mounts: "{{ promtail_container_additional_mounts_default + promtail_container_additional_mounts_custom }}"
-promtail_container_additional_mounts_custom: []
+promtail_container_additional_mounts: "{{ promtail_container_additional_mounts_default + promtail_container_additional_mounts_auto + promtail_container_additional_mounts_custom }}"
 promtail_container_additional_mounts_default: |
   {{
-    (promtail_container_journald_volume if promtail_journald_scraper_enabled else [])
-  +
-    (promtail_container_varlog_volume if promtail_varlog_scraper_enabled else [])
+    (promtail_journald_scraper_container_additional_volumes if promtail_journald_scraper_enabled else [])
+    +
+    (promtail_varlog_scraper_container_additional_volumes if promtail_varlog_scraper_enabled else [])
   }}
-promtail_container_journald_volume:
-  - "type=bind,source=/var/log/journal,target=/data/journal,readonly"
-  - "type=bind,source=/etc/machine-id,target=/etc/machine-id,readonly"
-promtail_container_varlog_volume:
-  - "type=bind,source=/var/log,target=/data/varlog,readonly"
+promtail_container_additional_mounts_auto: []
+promtail_container_additional_mounts_custom: []
 
 # For a more advanced customization, you can extend the default (see `promtail_configuration_extension_yaml`)
 # or completely replace this variable with your own template.
@@ -136,16 +132,33 @@ promtail_configuration_extension: "{{ promtail_configuration_extension_yaml | fr
 promtail_configuration: "{{ promtail_configuration_yaml | from_yaml | combine(promtail_configuration_extension, recursive=True) }}"
 
 # Controls the scrape_configs configuration parameter
-promtail_config_scrape: "{{ '\n'.join((promtail_config_scrape_default, promtail_config_scrape_additional)) }}"
-promtail_config_scrape_additional: ''
-promtail_config_scrape_default: "{{promtail_config_scrape_journald_default + '\n' if promtail_journald_scraper_enabled }}{{ promtail_config_scrape_varlog_default if promtail_varlog_scraper_enabled }}"
+promtail_config_scrape_configs: "{{ '\n'.join((promtail_config_scrape_configs_default, promtail_config_scrape_configs_auto, promtail_config_scrape_configs_custom)) }}"
+
+promtail_config_scrape_configs_default: |
+  {{ (promtail_journald_scraper_config + '\n' if promtail_journald_scraper_enabled else '') }}
+  {{ (promtail_varlog_scraper_config if promtail_varlog_scraper_enabled else '') }}
+
+promtail_config_scrape_configs_auto: ''
+promtail_config_scrape_configs_custom: ''
+
+########################################################################
+#                                                                      #
+# journald scraper                                                     #
+#                                                                      #
+########################################################################
+
 promtail_journald_scraper_enabled: true
-promtail_config_scrape_journald_default: >-
+
+promtail_journald_scraper_container_additional_volumes:
+  - "type=bind,source=/var/log/journal,target=/var-log-journal,readonly"
+  - "type=bind,source=/etc/machine-id,target=/etc/machine-id,readonly"
+
+promtail_journald_scraper_config: >-
   - job_name: journal
     journal:
       json: false
       max_age: 12h
-      path: /data/journal
+      path: /var-log-journal
       labels:
         job: systemd-journal
     relabel_configs:
@@ -161,16 +174,39 @@ promtail_config_scrape_journald_default: >-
       - match:
           selector:  '{unit="{{ promtail_identifier }}.service"}'
           action: drop
+
+########################################################################
+#                                                                      #
+# /journald scraper                                                    #
+#                                                                      #
+########################################################################
+
+
+########################################################################
+#                                                                      #
+# varlog scraper                                                       #
+#                                                                      #
+########################################################################
+
 promtail_varlog_scraper_enabled: true
-promtail_config_scrape_varlog_default: >-
+
+promtail_varlog_scraper_container_additional_volumes:
+  - "type=bind,source=/var/log,target=/var-log,readonly"
+
+promtail_varlog_scraper_config: >-
   - job_name: varlog
     static_configs:
     - targets:
       - localhost
       labels:
-        __path__: /data/varlog/**/*log
+        __path__: /var-log/**/*log
         job: varlog
 
+########################################################################
+#                                                                      #
+# /varlog scraper                                                      #
+#                                                                      #
+########################################################################
 
 # Clients config
 # A client definition should contain a `url` field. Example:
@@ -182,9 +218,8 @@ promtail_config_clients: "{{ promtail_config_clients_auto + promtail_config_clie
 promtail_config_clients_auto: []
 promtail_config_clients_custom: []
 
-# Positions config
-promtail_config_positions:
-  filename: "/tmp/positions.yml"
+# Configures the positions.filename parameter. This is an in-container path.
+promtail_config_positions_filename: /data/positions.yml
 
 # Servers config
 promtail_config_server:
