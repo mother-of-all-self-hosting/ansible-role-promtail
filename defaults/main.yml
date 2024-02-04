@@ -209,11 +209,14 @@ promtail_varlog_scraper_config:
 ########################################################################
 
 # Clients config
-# A client definition should contain a `url` field. Example:
+#
+# A client definition should look like this:
 # promtail_config_clients_custom:
 #   # Note the double /loki/loki.
 #   # This assumes Loki is installed at a `/loki` path-prefix.
 #   - url: https://mash.example.com/loki/loki/api/v1/push
+#     # Value to pass as an X-Scope-OrgID HTTP header
+#     tenant_id: "mash"
 promtail_config_clients: "{{ promtail_config_clients_auto + promtail_config_clients_custom }}"
 promtail_config_clients_auto: []
 promtail_config_clients_custom: []
