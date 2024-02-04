@@ -44,8 +44,8 @@ promtail_container_http_host_bind_port: ""
 promtail_container_grpc_host_bind_port: ""
 
 # The ports promtail will use for http/grpc inside the container
-promtail_config_server_http_port: 9080
-promtail_config_server_grpc_port: 9081
+promtail_config_http_listen_port: 9080
+promtail_config_grpc_listen_port: 9081
 
 # promtail_container_labels_traefik_enabled controls whether labels to assist a Traefik reverse-proxy will be attached to the container.
 # See `../templates/labels.j2` for details.
