@@ -70,6 +70,11 @@ promtail_container_capabilities_to_add_default: |
 promtail_container_capabilities_to_add_auto: []
 promtail_container_capabilities_to_add_custom: []
 
+# Additional arguments to pass to the container-starting/container-preparation command (e.g. `docker run ARGUMENTS` or `docker create ARGUMENTS`).
+promtail_container_extra_arguments: "{{ promtail_container_extra_arguments_auto + promtail_container_extra_arguments_custom }}"
+promtail_container_extra_arguments_auto: []
+promtail_container_extra_arguments_custom: []
+
 # promtail_container_labels_traefik_enabled controls whether labels to assist a Traefik reverse-proxy will be attached to the container.
 # See `../templates/labels.j2` for details.
 #
