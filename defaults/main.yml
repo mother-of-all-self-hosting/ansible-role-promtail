@@ -95,9 +95,6 @@ promtail_container_labels_traefik_additional_response_headers_auto: |
   }}
 promtail_container_labels_traefik_additional_response_headers_custom: {}
 
-# Specifies the size (in MB) of the tmpfs /tmp directory
-promtail_tmpfs_size_mb: 100
-
 # A list of additional "mounts" to be mounted in the container.
 # Contains definition objects like this:
 # promtail_container_additional_mounts:
