@@ -18,6 +18,15 @@
     - {'old': 'promtail_config_scrape_additional', 'new': 'promtail_config_scrape_configs_custom'}
     - {'old': 'promtail_config_scrape_varlog_default', 'new': 'promtail_varlog_scraper_config'}
     - {'old': 'promtail_config_positions', 'new': '<superseded by promtail_config_positions_filename and promtail_configuration_extension_yaml>'}
+    - {'old': 'promtail_target_config', 'new': '<superseded by promtail_configuration_extension_yaml>'}
+    - {'old': 'promtail_config_options', 'new': '<superseded by promtail_configuration_extension_yaml>'}
+    - {'old': 'promtail_config_limits', 'new': '<superseded by promtail_configuration_extension_yaml>'}
+    - {'old': 'promtail_config_tracing', 'new': '<superseded by promtail_configuration_extension_yaml>'}
+    - {'old': 'promtail_config_global', 'new': '<superseded by promtail_configuration_extension_yaml>'}
+    - {'old': 'promtail_config_server', 'new': '<superseded by promtail_configuration_extension_yaml>'}
+    - {'old': 'promtail_container_http_port', 'new': 'promtail_config_server_http_port'}
+    - {'old': 'promtail_container_grpc_port', 'new': 'promtail_config_server_grpc_port'}
+    - {'old': 'promtail_container_additionnal_bind_ports', 'new': '<removed>'}
 
 - name: Fail if required Promtail settings not defined
   ansible.builtin.fail:

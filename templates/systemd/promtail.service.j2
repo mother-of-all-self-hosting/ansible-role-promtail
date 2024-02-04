@@ -20,11 +20,11 @@ ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
                 --read-only \
                 --network={{ promtail_container_network }} \
                 {% if promtail_container_http_host_bind_port %}
-                -p {{ promtail_container_http_host_bind_port }}:{{ promtail_container_http_port }} \
+                -p {{ promtail_container_http_host_bind_port }}:{{ promtail_config_server_http_port }} \
                 {% endif %}
-                {% for port in promtail_container_additionnal_bind_ports %}
-                -p {{ port[0] }}:{{ port[1] }} \
-                {% endfor %}
+                {% if promtail_container_grpc_host_bind_port %}
+                -p {{ promtail_container_grpc_host_bind_port }}:{{ promtail_config_server_grpc_port }} \
+                {% endif %}
                 --label-file={{ promtail_base_path }}/labels \
                 --mount type=bind,src={{ promtail_config_path }},dst=/etc/promtail,ro \
                 --mount type=bind,src={{ promtail_data_path }},dst=/data \

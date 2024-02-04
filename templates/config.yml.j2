@@ -1,40 +1,14 @@
 #jinja2: lstrip_blocks: "True"
-
-{% if promtail_config_global |length %}
-global:
-  {{ promtail_config_global }}
-{% endif %}
-
 server:
-  {{ promtail_config_server | to_nice_yaml(indent=2) | indent(2, False) }}
+  http_listen_port: {{ promtail_config_http_listen_port | int | to_json }}
+  grpc_listen_port: {{ promtail_config_grpc_listen_port | int | to_json }}
 
 positions:
   filename: {{ promtail_config_positions_filename | to_json }}
 
-clients:
-  {{ promtail_config_clients | to_nice_yaml(indent=2) | indent(2, False) }}
+clients: {{ promtail_config_clients | to_json }}
 
 {% if promtail_config_scrape_configs | trim | length > 0 %}
 scrape_configs:
 {{ promtail_config_scrape_configs }}
-{% endif %}
-
-{% if promtail_target_config |length %}
-target_config:
-  {{ promtail_target_config }}
-{% endif %}
-
-{% if promtail_config_limits |length %}
-limits:
-  {{ promtail_config_limits }}
-{% endif %}
-
-{% if promtail_config_options |length %}
-options:
-  {{ promtail_config_options }}
-{% endif %}
-
-{% if promtail_config_tracing |length %}
-tracing:
-  {{ promtail_config_tracing }}
 {% endif %}
