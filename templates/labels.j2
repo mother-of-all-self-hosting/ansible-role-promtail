@@ -5,32 +5,101 @@ traefik.enable=true
 traefik.docker.network={{ promtail_container_labels_traefik_docker_network }}
 {% endif %}
 
-traefik.http.services.{{ promtail_identifier }}.loadbalancer.server.port={{ promtail_container_http_port }}
+traefik.http.services.{{ promtail_identifier }}.loadbalancer.server.port={{ promtail_config_http_listen_port }}
+
+{% if promtail_container_labels_api_enabled %}
+############################################################
+#                                                          #
+# API                                                      #
+#                                                          #
+############################################################
 
 {% set middlewares = [] %}
 
-{% if promtail_basic_auth_enabled %}
-traefik.http.middlewares.{{ promtail_identifier }}-auth.basicauth.users={{ promtail_container_label_basicauth_users }}
-{% set middlewares = middlewares + [promtail_identifier + '-auth@docker'] %}
+{% if promtail_container_labels_api_traefik_middleware_basic_auth_enabled %}
+traefik.http.middlewares.{{ promtail_identifier }}-api-auth.basicauth.users={{ promtail_container_labels_api_traefik_middleware_basic_auth_users }}
+{% set middlewares = middlewares + [promtail_identifier + '-api-auth@docker'] %}
 {% endif %}
 
-traefik.http.middlewares.{{ promtail_identifier }}-strip-prefix.stripprefix.prefixes={{ promtail_path_prefix }}
-{% set middlewares = middlewares + [promtail_identifier + '-strip-prefix@docker'] %}
+{#
+	Promtail redirects the root path to /targets, but in a non-path-prefix-aware way.
+	For this reason, we capture root path requests and redirect them ourselves.
+#}
+traefik.http.middlewares.{{ promtail_identifier }}-api-redirect-root-path.redirectregex.regex=({{ promtail_container_labels_api_path_prefix | quote }})$
+traefik.http.middlewares.{{ promtail_identifier }}-api-redirect-root-path.redirectregex.replacement=${1}/targets
+{% set middlewares = middlewares + [promtail_identifier + '-api-redirect-root-path'] %}
 
-traefik.http.routers.{{ promtail_identifier }}.rule={{ promtail_container_labels_traefik_rule }}
+traefik.http.middlewares.{{ promtail_identifier }}-api-strip-prefix.stripprefix.prefixes={{ promtail_container_labels_api_path_prefix }}
+{% set middlewares = middlewares + [promtail_identifier + '-api-strip-prefix@docker'] %}
+
+traefik.http.routers.{{ promtail_identifier }}-api.rule={{ promtail_container_labels_api_traefik_rule }}
 
 {% if middlewares | length > 0 %}
-traefik.http.routers.{{ promtail_identifier }}.middlewares={{ middlewares | join(',') }}
+traefik.http.routers.{{ promtail_identifier }}-api.middlewares={{ middlewares | join(',') }}
 {% endif %}
 
-traefik.http.routers.{{ promtail_identifier }}.service={{ promtail_identifier }}
-traefik.http.routers.{{ promtail_identifier }}.priority={{ promtail_container_labels_traefik_priority }}
-traefik.http.routers.{{ promtail_identifier }}.entrypoints={{ promtail_container_labels_traefik_entrypoints }}
-
-traefik.http.routers.{{ promtail_identifier }}.tls={{ promtail_container_labels_traefik_tls | to_json }}
-{% if promtail_container_labels_traefik_tls %}
-traefik.http.routers.{{ promtail_identifier }}.tls.certResolver={{ promtail_container_labels_traefik_tls_certResolver }}
+{% if promtail_container_labels_api_traefik_priority | int > 0 %}
+traefik.http.routers.{{ promtail_identifier }}-api.priority={{ promtail_container_labels_api_traefik_priority }}
 {% endif %}
+
+traefik.http.routers.{{ promtail_identifier }}-api.service={{ promtail_identifier }}
+traefik.http.routers.{{ promtail_identifier }}-api.entrypoints={{ promtail_container_labels_api_traefik_entrypoints }}
+
+traefik.http.routers.{{ promtail_identifier }}-api.tls={{ promtail_container_labels_api_traefik_tls | to_json }}
+{% if promtail_container_labels_api_traefik_tls %}
+traefik.http.routers.{{ promtail_identifier }}-api.tls.certResolver={{ promtail_container_labels_api_traefik_tls_certResolver }}
+{% endif %}
+
+############################################################
+#                                                          #
+# /API                                                     #
+#                                                          #
+############################################################
+{% endif %}
+
+
+{% if promtail_container_labels_metrics_enabled %}
+############################################################
+#                                                          #
+# Metrics                                                  #
+#                                                          #
+############################################################
+
+{% set middlewares = [] %}
+
+{% if promtail_container_labels_metrics_traefik_middleware_basic_auth_enabled %}
+traefik.http.middlewares.{{ promtail_identifier }}-metrics-auth.basicauth.users={{ promtail_container_labels_metrics_traefik_middleware_basic_auth_users }}
+{% set middlewares = middlewares + [promtail_identifier + '-metrics-auth@docker'] %}
+{% endif %}
+
+traefik.http.middlewares.{{ promtail_identifier }}-metrics-replace-path.replacepath.path=/metrics
+{% set middlewares = middlewares + [promtail_identifier + '-metrics-replace-path@docker'] %}
+
+traefik.http.routers.{{ promtail_identifier }}-metrics.rule={{ promtail_container_labels_metrics_traefik_rule }}
+
+{% if middlewares | length > 0 %}
+traefik.http.routers.{{ promtail_identifier }}-metrics.middlewares={{ middlewares | join(',') }}
+{% endif %}
+
+{% if promtail_container_labels_metrics_traefik_priority | int > 0 %}
+traefik.http.routers.{{ promtail_identifier }}-metrics.priority={{ promtail_container_labels_metrics_traefik_priority }}
+{% endif %}
+
+traefik.http.routers.{{ promtail_identifier }}-metrics.service={{ promtail_identifier }}
+traefik.http.routers.{{ promtail_identifier }}-metrics.entrypoints={{ promtail_container_labels_metrics_traefik_entrypoints }}
+
+traefik.http.routers.{{ promtail_identifier }}-metrics.tls={{ promtail_container_labels_metrics_traefik_tls | to_json }}
+{% if promtail_container_labels_metrics_traefik_tls %}
+traefik.http.routers.{{ promtail_identifier }}-metrics.tls.certResolver={{ promtail_container_labels_metrics_traefik_tls_certResolver }}
+{% endif %}
+
+############################################################
+#                                                          #
+# /Metrics                                                 #
+#                                                          #
+############################################################
+{% endif %}
+
 
 {% endif %}
 

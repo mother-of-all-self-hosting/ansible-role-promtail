@@ -7,10 +7,10 @@
       Please change your configuration to rename the variable (`{{ item.old }}` -> `{{ item.new }}`).
   when: "item.old in vars"
   with_items:
-    - {'old': 'promtail_basic_auth_enabled', 'new': 'promtail_container_labels_middleware_basic_auth_enabled'}
-    - {'old': 'promtail_basic_auth_username', 'new': '<superseded by promtail_container_labels_middleware_basic_auth_users>'}
-    - {'old': 'promtail_basic_auth_password', 'new': '<superseded by promtail_container_labels_middleware_basic_auth_users>'}
-    - {'old': 'promtail_container_label_basicauth_users', 'new': '<superseded by promtail_container_labels_middleware_basic_auth_users>'}
+    - {'old': 'promtail_basic_auth_enabled', 'new': '<superseded by promtail_container_labels_api_traefik_middleware_basic_auth_enabled and promtail_container_labels_metrics_traefik_middleware_basic_auth_enabled>'}
+    - {'old': 'promtail_basic_auth_username', 'new': '<superseded by promtail_container_labels_api_traefik_middleware_basic_auth_users or promtail_container_labels_metrics_traefik_middleware_basic_auth_users>'}
+    - {'old': 'promtail_basic_auth_password', 'new': '<superseded by promtail_container_labels_api_traefik_middleware_basic_auth_users or promtail_container_labels_metrics_traefik_middleware_basic_auth_users>'}
+    - {'old': 'promtail_container_label_basicauth_users', 'new': '<superseded by promtail_container_labels_api_traefik_middleware_basic_auth_users or promtail_container_labels_metrics_traefik_middleware_basic_auth_users>'}
     - {'old': 'promtail_default_loki_client_enabled', 'new': '<removed>'}
     - {'old': 'promtail_default_loki_client', 'new': '<removed>'}
     - {'old': 'promtail_loki_server_url', 'new': '<removed>'}
@@ -36,7 +36,8 @@
   when: "item.when | bool and vars[item.name] == ''"
   with_items:
     - {'name': 'promtail_container_labels_traefik_hostname', when: "{{ promtail_container_labels_traefik_enabled }}"}
-    - {'name': 'promtail_container_labels_middleware_basic_auth_users', when: "{{ promtail_container_labels_middleware_basic_auth_enabled }}"}
+    - {'name': 'promtail_container_labels_api_traefik_middleware_basic_auth_users', when: "{{ promtail_container_labels_traefik_enabled and promtail_container_labels_api_traefik_middleware_basic_auth_enabled }}"}
+    - {'name': 'promtail_container_labels_metrics_traefik_middleware_basic_auth_users', when: "{{ promtail_container_labels_traefik_enabled and promtail_container_labels_metrics_traefik_middleware_basic_auth_enabled }}"}
 
 - name: Fail if no Promtail clients are defined
   ansible.builtin.fail:
