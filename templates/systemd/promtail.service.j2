@@ -11,12 +11,21 @@ Type=simple
 ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} kill {{ promtail_identifier }} 2>/dev/null || true'
 ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} rm {{ promtail_identifier }} 2>/dev/null || true'
 
+{#
+    When running with a different user than promtail_uid/promtail_gid, even if that user is root,
+    we need to grant CAP_DAC_READ_SEARCH so that Promtail can read its own config.
+#}
 ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
                 --rm \
                 --name={{ promtail_identifier }} \
                 --log-driver=none \
+                {% if promtail_container_run_as_non_root_user_enabled %}
                 --user={{ promtail_uid }}:{{ promtail_gid }} \
+                {% endif %}
                 --cap-drop=ALL \
+                {% for capability in promtail_container_capabilities_to_add %}
+                --cap-add={{ capability }} \
+                {% endfor %}
                 --read-only \
                 --network={{ promtail_container_network }} \
                 {% if promtail_container_http_host_bind_port %}
