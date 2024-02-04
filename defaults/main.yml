@@ -13,7 +13,10 @@ promtail_base_path: "/{{ promtail_identifier }}"
 promtail_config_path: "{{ promtail_base_path }}/config"
 promtail_data_path: "{{ promtail_base_path }}/data"
 
-promtail_systemd_required_services_list: ['docker.service']
+promtail_systemd_required_services_list: "{{ promtail_systemd_required_services_list_default + promtail_systemd_required_services_list_auto + promtail_systemd_required_services_list_custom }}"
+promtail_systemd_required_services_list_default: ['docker.service']
+promtail_systemd_required_services_list_auto: []
+promtail_systemd_required_services_list_custom: []
 
 promtail_version: 2.9.2
 
@@ -34,7 +37,7 @@ promtail_container_additional_networks: []
 # Takes an "<ip>:<port>" or "<port>" value (e.g. "127.0.0.1:9080"), or empty string to not expose.
 promtail_container_http_host_bind_port: ""
 
-# List additional ports to bind to container 
+# List additional ports to bind to container
 # Should be defined as :
 # - [<host_port>,<container_port>]
 # or
@@ -118,10 +121,10 @@ promtail_container_additional_mounts_default: |
   +
     (promtail_container_varlog_volume if promtail_varlog_scraper_enabled else [])
   }}
-promtail_container_journald_volume: 
+promtail_container_journald_volume:
   - "type=bind,source=/var/log/journal,target=/data/journal,readonly"
   - "type=bind,source=/etc/machine-id,target=/etc/machine-id,readonly"
-promtail_container_varlog_volume: 
+promtail_container_varlog_volume:
   - "type=bind,source=/var/log,target=/data/varlog,readonly"
 
 # For a more advanced customization, you can extend the default (see `promtail_configuration_extension_yaml`)
@@ -185,11 +188,11 @@ promtail_config_clients_additionnal: []
 # Default Loki client
 promtail_default_loki_client_enabled: "{{ true if loki_enabled else false }}"
 promtail_loki_server_url: "{{ loki_identifier + ':3100' if loki_enabled else 'http://127.0.0.1:3100' }}"
-promtail_default_loki_client: 
+promtail_default_loki_client:
   - url: "http://{{ promtail_loki_server_url }}/loki/api/v1/push"
 
 # Positions config
-promtail_config_positions: 
+promtail_config_positions:
   filename: "/tmp/positions.yml"
 
 # Servers config
