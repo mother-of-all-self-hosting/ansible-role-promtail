@@ -200,17 +200,22 @@ promtail_config_scrape_configs_custom: []
 promtail_journald_scraper_enabled: false
 
 promtail_journald_scraper_host_path: /var/log/journal
+promtail_journald_scraper_in_container_path: /journal
 
 promtail_journald_scraper_container_additional_volumes:
-  - "type=bind,source={{ promtail_journald_scraper_host_path }},target=/scraper-journald,readonly"
+  - "type=bind,source={{ promtail_journald_scraper_host_path }},target={{ promtail_journald_scraper_in_container_path }},readonly"
   - "type=bind,source=/etc/machine-id,target=/etc/machine-id,readonly"
+
+promtail_journald_scraper_config_journal_json: false
+promtail_journald_scraper_config_journal_max_age: 12h
+promtail_journald_scraper_config_journal_path: "{{ promtail_journald_scraper_in_container_path }}"
 
 promtail_journald_scraper_config:
   - job_name: journal
     journal:
-      json: false
-      max_age: 12h
-      path: /scraper-journald
+      json: "{{ promtail_journald_scraper_config_journal_json }}"
+      max_age: "{{ promtail_journald_scraper_config_journal_max_age }}"
+      path: "{{ promtail_journald_scraper_config_journal_path }}"
       labels:
         job: systemd-journal
     relabel_configs:
@@ -243,18 +248,23 @@ promtail_journald_scraper_config:
 promtail_varlog_scraper_enabled: false
 
 promtail_varlog_scraper_host_path: /var/log
+promtail_varlog_scraper_in_container_path: /varlog
 
 promtail_varlog_scraper_container_additional_volumes:
-  - "type=bind,source={{ promtail_varlog_scraper_host_path }},target=/scraper-varlog,readonly"
+  - "type=bind,source={{ promtail_varlog_scraper_host_path }},target={{ promtail_varlog_scraper_in_container_path }},readonly"
+
+promtail_varlog_scraper_config_labels_path: "{{ promtail_varlog_scraper_in_container_path }}{{ promtail_varlog_scraper_config_labels_path_suffix }}"
+promtail_varlog_scraper_config_labels_path_suffix: /**/*log
+promtail_varlog_scraper_config_labels_job: varlog
+promtail_varlog_scraper_config_labels_host: "{{ inventory_hostname }}"
 
 promtail_varlog_scraper_config:
   - job_name: varlog
     static_configs:
-    - targets:
-      - localhost
-      labels:
-        __path__: /scraper-varlog/**/*log
-        job: varlog
+      - labels:
+          __path__: "{{ promtail_varlog_scraper_config_labels_path }}"
+          job: "{{ promtail_varlog_scraper_config_labels_job }}"
+          host: "{{ promtail_varlog_scraper_config_labels_host }}"
 
 ########################################################################
 #                                                                      #
