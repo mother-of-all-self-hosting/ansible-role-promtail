@@ -10,6 +10,7 @@
   with_items:
     - {path: "{{ promtail_base_path }}", when: true}
     - {path: "{{ promtail_config_path }}", when: true}
+    - {path: "{{ promtail_data_path }}", when: true}
 
 - name: Ensure Promtail configuration file installed
   ansible.builtin.copy:
