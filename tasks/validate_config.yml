@@ -28,6 +28,7 @@
     - {'old': 'promtail_container_grpc_port', 'new': 'promtail_config_server_grpc_port'}
     - {'old': 'promtail_container_additionnal_bind_ports', 'new': '<removed>'}
     - {'old': 'promtail_tmpfs_size', 'new': '<removed>'}
+    - {'old': 'promtail_container_labels_traefik_hostname', 'new': '<removed>'}
 
 - name: Fail if required Promtail settings not defined
   ansible.builtin.fail:
@@ -35,9 +36,11 @@
       You need to define a required configuration setting (`{{ item.name }}`).
   when: "item.when | bool and vars[item.name] == ''"
   with_items:
-    - {'name': 'promtail_container_labels_traefik_hostname', when: "{{ promtail_container_labels_traefik_enabled }}"}
-    - {'name': 'promtail_container_labels_api_traefik_middleware_basic_auth_users', when: "{{ promtail_container_labels_traefik_enabled and promtail_container_labels_api_traefik_middleware_basic_auth_enabled }}"}
-    - {'name': 'promtail_container_labels_metrics_traefik_middleware_basic_auth_users', when: "{{ promtail_container_labels_traefik_enabled and promtail_container_labels_metrics_traefik_middleware_basic_auth_enabled }}"}
+    - {'name': 'promtail_container_labels_api_hostname', when: "{{ promtail_container_labels_api_enabled }}"}
+    - {'name': 'promtail_container_labels_api_traefik_middleware_basic_auth_users', when: "{{ promtail_container_labels_traefik_enabled and promtail_container_labels_api_enabled and promtail_container_labels_api_traefik_middleware_basic_auth_enabled }}"}
+
+    - {'name': 'promtail_container_labels_metrics_hostname', when: "{{ promtail_container_labels_metrics_enabled }}"}
+    - {'name': 'promtail_container_labels_metrics_traefik_middleware_basic_auth_users', when: "{{ promtail_container_labels_traefik_enabled and promtail_container_labels_metrics_enabled and promtail_container_labels_metrics_traefik_middleware_basic_auth_enabled }}"}
 
 - name: Fail if no Promtail clients are defined
   ansible.builtin.fail:

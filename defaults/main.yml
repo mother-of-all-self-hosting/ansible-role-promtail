@@ -83,12 +83,11 @@ promtail_container_extra_arguments_custom: []
 # To inject your own other container labels, see `promtail_container_labels_additional_labels`.
 promtail_container_labels_traefik_enabled: false
 promtail_container_labels_traefik_docker_network: "{{ promtail_container_network }}"
-promtail_container_labels_traefik_hostname: "{{ promtail_hostname }}"
 promtail_container_labels_traefik_entrypoints: web-secure
 
 # Controls if Promtail exposes its API (including a /metrics endpoint under it)
 promtail_container_labels_api_enabled: false
-promtail_container_labels_api_hostname: "{{ promtail_container_labels_traefik_hostname }}"
+promtail_container_labels_api_hostname: "{{ promtail_hostname }}"
 # The path prefix must either be `/` or not end with a slash (e.g. `/promtail`).
 promtail_container_labels_api_path_prefix: "{{ promtail_path_prefix }}"
 promtail_container_labels_api_traefik_rule: "Host(`{{ promtail_container_labels_api_hostname }}`){% if promtail_container_labels_api_path_prefix != '/' %} && PathPrefix(`{{ promtail_container_labels_api_path_prefix }}`){% endif %}"
@@ -103,7 +102,7 @@ promtail_container_labels_api_traefik_middleware_basic_auth_users: ''
 # Controls if Promtail exposes its /metrics endpoint.
 # We have dedicated labels for this, so that one could easily expose just the metrics while not exposing the whole API.
 promtail_container_labels_metrics_enabled: false
-promtail_container_labels_metrics_hostname: "{{ promtail_container_labels_traefik_hostname }}"
+promtail_container_labels_metrics_hostname: "{{ promtail_hostname }}"
 # The path prefix must either be `/` or not end with a slash (e.g. `/metrics/promtail`).
 promtail_container_labels_metrics_path_prefix: "{{ '' if promtail_path_prefix == '/' else promtail_path_prefix }}/metrics"
 promtail_container_labels_metrics_traefik_rule: "Host(`{{ promtail_container_labels_metrics_hostname }}`){% if promtail_container_labels_metrics_path_prefix != '/' %} && Path(`{{ promtail_container_labels_metrics_path_prefix }}`){% endif %}"
