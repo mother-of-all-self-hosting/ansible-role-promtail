@@ -208,6 +208,12 @@ promtail_journald_scraper_container_additional_volumes:
 promtail_journald_scraper_config_journal_json: false
 promtail_journald_scraper_config_journal_max_age: 12h
 promtail_journald_scraper_config_journal_path: "{{ promtail_journald_scraper_in_container_path }}"
+# By default promtail will scrape every jounrnald unit except itself
+# You can change this behavior by setting promtail_journald_scraper_config_regex_unit_to_keep and promtail_journald_scraper_config_regex_unit_to_drop
+# This will filter the unit to keep using regex on __journal__systemd_unit
+# Exemple: promtail_journald_scraper_config_regex_unit_to_keep: 'ssh\.service|fail2ban\.service|mash-.*'
+promtail_journald_scraper_config_regex_unit_to_keep: '.*'
+promtail_journald_scraper_config_regex_unit_to_drop: '{{ promtail_identifier }}\.service'
 
 promtail_journald_scraper_config:
   - job_name: journal
@@ -226,10 +232,12 @@ promtail_journald_scraper_config:
         target_label: level
       - source_labels: ["__journal_syslog_identifier"]
         target_label: syslog_identifier
-    pipeline_stages:
-      - match:
-          selector: '{unit="{{ promtail_identifier }}.service"}'
-          action: drop
+      - action: drop
+        regex: '{{ promtail_journald_scraper_config_regex_unit_to_drop }}'
+        source_labels: ['unit']
+      - action: keep
+        regex: '{{ promtail_journald_scraper_config_regex_unit_to_keep }}'
+        source_labels: ['unit']
 
 ########################################################################
 #                                                                      #
