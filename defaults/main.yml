@@ -20,7 +20,7 @@ promtail_systemd_required_services_list_default: ['docker.service']
 promtail_systemd_required_services_list_auto: []
 promtail_systemd_required_services_list_custom: []
 
-promtail_version: 2.9.4
+promtail_version: 2.9.5
 
 promtail_container_image: "{{ promtail_container_image_registry_prefix }}grafana/promtail:{{ promtail_container_image_tag }}"
 promtail_container_image_registry_prefix: docker.io/
