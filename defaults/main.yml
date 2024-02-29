@@ -208,12 +208,20 @@ promtail_journald_scraper_container_additional_volumes:
 promtail_journald_scraper_config_journal_json: false
 promtail_journald_scraper_config_journal_max_age: 12h
 promtail_journald_scraper_config_journal_path: "{{ promtail_journald_scraper_in_container_path }}"
-# By default promtail will scrape every jounrnald unit except itself
-# You can change this behavior by setting promtail_journald_scraper_config_regex_unit_to_keep and promtail_journald_scraper_config_regex_unit_to_drop
-# This will filter the unit to keep using regex on __journal__systemd_unit
-# Exemple: promtail_journald_scraper_config_regex_unit_to_keep: 'ssh\.service|fail2ban\.service|mash-.*'
-promtail_journald_scraper_config_regex_unit_to_keep: '.*'
-promtail_journald_scraper_config_regex_unit_to_drop: '{{ promtail_identifier }}\.service'
+
+# With the default configuration below, Promtail will scrape every systemd-journald unit except itself.
+# You can change this behavior by adjusting `promtail_journald_scraper_config_relabel_configs_drop_regex` and `promtail_journald_scraper_config_relabel_configs_keep_regex`.
+#
+# Note that dropping happens first. If you drop too much, you may not have anything left to keep.
+#
+# To avoid dropping anything and only rely on whitelisting (via `promtail_journald_scraper_config_relabel_configs_keep_regex`),
+# consider setting `promtail_journald_scraper_config_relabel_configs_drop_regex` to a dummy regex that will never match,
+# instead of unsetting it.
+#
+# Example: promtail_journald_scraper_config_relabel_configs_drop_regex: '{{ promtail_identifier }}\.service|another-ignored-unit\.service'
+promtail_journald_scraper_config_relabel_configs_drop_regex: '{{ promtail_identifier }}\.service'
+# Example: promtail_journald_scraper_config_relabel_configs_keep_regex: 'ssh\.service|fail2ban\.service|mash-.*'
+promtail_journald_scraper_config_relabel_configs_keep_regex: '.*'
 
 promtail_journald_scraper_config:
   - job_name: journal
@@ -233,10 +241,10 @@ promtail_journald_scraper_config:
       - source_labels: ["__journal_syslog_identifier"]
         target_label: syslog_identifier
       - action: drop
-        regex: '{{ promtail_journald_scraper_config_regex_unit_to_drop }}'
+        regex: '{{ promtail_journald_scraper_config_relabel_configs_drop_regex }}'
         source_labels: ['unit']
       - action: keep
-        regex: '{{ promtail_journald_scraper_config_regex_unit_to_keep }}'
+        regex: '{{ promtail_journald_scraper_config_relabel_configs_keep_regex }}'
         source_labels: ['unit']
 
 ########################################################################
