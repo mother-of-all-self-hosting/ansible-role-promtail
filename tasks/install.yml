@@ -35,13 +35,6 @@
   with_items:
     - labels
 
-- name: Ensure Promtail container network is created
-  community.docker.docker_network:
-    enable_ipv6: "{{ devture_systemd_docker_base_ipv6_enabled }}"
-    name: "{{ promtail_container_network }}"
-    driver: bridge
-    driver_options: "{{ devture_systemd_docker_base_container_networks_driver_options }}"
-
 - name: Ensure Promtail container image is pulled
   community.docker.docker_image:
     name: "{{ promtail_container_image }}"
@@ -49,7 +42,14 @@
     force_source: "{{ promtail_container_image_force_pull if ansible_version.major > 2 or ansible_version.minor >= 8 else omit }}"
     force: "{{ omit if ansible_version.major > 2 or ansible_version.minor >= 8 else promtail_container_image_force_pull }}"
 
-- name: Ensure Promtail systemd service installed
+- name: Ensure Promtail container network is created
+  community.docker.docker_network:
+    enable_ipv6: "{{ devture_systemd_docker_base_ipv6_enabled }}"
+    name: "{{ promtail_container_network }}"
+    driver: bridge
+    driver_options: "{{ devture_systemd_docker_base_container_networks_driver_options }}"
+
+- name: Ensure Promtail systemd service is present
   ansible.builtin.template:
     src: "{{ role_path }}/templates/systemd/promtail.service.j2"
     dest: "{{ devture_systemd_docker_base_systemd_path }}/{{ promtail_identifier }}.service"
