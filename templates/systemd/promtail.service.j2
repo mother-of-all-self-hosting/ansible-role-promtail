@@ -23,34 +23,34 @@ ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_s
     we need to grant CAP_DAC_READ_SEARCH so that Promtail can read its own config.
 #}
 ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
-                --rm \
-                --name={{ promtail_identifier }} \
-                --log-driver=none \
-                {% if promtail_container_run_as_non_root_user_enabled %}
-                --user={{ promtail_uid }}:{{ promtail_gid }} \
-                {% endif %}
-                --cap-drop=ALL \
-                {% for capability in promtail_container_capabilities_to_add %}
-                --cap-add={{ capability }} \
-                {% endfor %}
-                --read-only \
-                --network={{ promtail_container_network }} \
-                {% if promtail_container_http_host_bind_port %}
-                -p {{ promtail_container_http_host_bind_port }}:{{ promtail_config_http_listen_port }} \
-                {% endif %}
-                {% if promtail_container_grpc_host_bind_port %}
-                -p {{ promtail_container_grpc_host_bind_port }}:{{ promtail_config_grpc_listen_port }} \
-                {% endif %}
-                --label-file={{ promtail_base_path }}/labels \
-                --mount type=bind,src={{ promtail_config_path }},dst=/etc/promtail,ro \
-                --mount type=bind,src={{ promtail_data_path }},dst=/data \
-                {% for mount in promtail_container_additional_mounts %}
-                --mount {{ mount }} \
-                {% endfor %}
-                {% for arg in promtail_container_extra_arguments %}
-                {{ arg }} \
-                {% endfor %}
-                {{ promtail_container_image }}
+      --rm \
+      --name={{ promtail_identifier }} \
+      --log-driver=none \
+      {% if promtail_container_run_as_non_root_user_enabled %}
+      --user={{ promtail_uid }}:{{ promtail_gid }} \
+      {% endif %}
+      --cap-drop=ALL \
+      {% for capability in promtail_container_capabilities_to_add %}
+      --cap-add={{ capability }} \
+      {% endfor %}
+      --read-only \
+      --network={{ promtail_container_network }} \
+      {% if promtail_container_http_host_bind_port %}
+      -p {{ promtail_container_http_host_bind_port }}:{{ promtail_config_http_listen_port }} \
+      {% endif %}
+      {% if promtail_container_grpc_host_bind_port %}
+      -p {{ promtail_container_grpc_host_bind_port }}:{{ promtail_config_grpc_listen_port }} \
+      {% endif %}
+      --label-file={{ promtail_base_path }}/labels \
+      --mount type=bind,src={{ promtail_config_path }},dst=/etc/promtail,ro \
+      --mount type=bind,src={{ promtail_data_path }},dst=/data \
+      {% for mount in promtail_container_additional_mounts %}
+      --mount {{ mount }} \
+      {% endfor %}
+      {% for arg in promtail_container_extra_arguments %}
+      {{ arg }} \
+      {% endfor %}
+      {{ promtail_container_image }}
 
 {% for network in promtail_container_additional_networks %}
 ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} network connect {{ network }} {{ promtail_identifier }}
