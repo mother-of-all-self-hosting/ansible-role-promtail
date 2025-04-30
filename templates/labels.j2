@@ -64,7 +64,6 @@ traefik.http.routers.{{ promtail_identifier }}-api.tls.certResolver={{ promtail_
 ############################################################
 {% endif %}
 
-
 {% if promtail_container_labels_metrics_enabled %}
 ############################################################
 #                                                          #
@@ -107,8 +106,6 @@ traefik.http.routers.{{ promtail_identifier }}-metrics.tls.certResolver={{ promt
 ############################################################
 {% endif %}
 
-
 {% endif %}
-
 
 {{ promtail_container_labels_additional_labels }}
