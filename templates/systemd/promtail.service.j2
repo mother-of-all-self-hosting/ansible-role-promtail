@@ -1,3 +1,10 @@
+{#
+SPDX-FileCopyrightText: 2024 Slavi Pantaleev
+SPDX-FileCopyrightText: 2024 Tiz
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+#}
+
 [Unit]
 Description=Promtail log agent ({{ promtail_identifier }})
 {% for service in promtail_systemd_required_services_list %}

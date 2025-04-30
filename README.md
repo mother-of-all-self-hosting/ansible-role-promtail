@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2024 Tiz
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
 # Promtail Ansible Role
 **WIP role, use with caution**  
 
