@@ -7,7 +7,7 @@
 
 - name: Ensure Promtail paths exist
   ansible.builtin.file:
-    path: "{{ item.path }}"
+    path: "{{ item }}"
     state: directory
     mode: 0700
     owner: "{{ promtail_uid }}"
