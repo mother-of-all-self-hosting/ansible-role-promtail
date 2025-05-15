@@ -5,7 +5,7 @@
 
 ---
 
-- name: Ensure Promtail path exists
+- name: Ensure Promtail paths exist
   ansible.builtin.file:
     path: "{{ item.path }}"
     state: directory
@@ -13,9 +13,9 @@
     owner: "{{ promtail_uid }}"
     group: "{{ promtail_gid }}"
   with_items:
-    - {path: "{{ promtail_base_path }}", when: true}
-    - {path: "{{ promtail_config_path }}", when: true}
-    - {path: "{{ promtail_data_path }}", when: true}
+    - "{{ promtail_base_path }}"
+    - "{{ promtail_config_path }}"
+    - "{{ promtail_data_path }}"
 
 - name: Ensure Promtail configuration file installed
   ansible.builtin.copy:
@@ -25,7 +25,7 @@
     owner: "{{ promtail_uid }}"
     group: "{{ promtail_gid }}"
 
-- name: Ensure Promtail support files created
+- name: Ensure Promtail support file installed
   ansible.builtin.template:
     src: "{{ role_path }}/templates/{{ item }}.j2"
     dest: "{{ promtail_base_path }}/{{ item }}"
