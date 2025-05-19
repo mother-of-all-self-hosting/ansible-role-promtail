@@ -1,26 +1,30 @@
+# SPDX-FileCopyrightText: 2023 Slavi Pantaleev
 # SPDX-FileCopyrightText: 2024 Tiz
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
 
-- name: Run Promtail installation tasks
+- name: Perform Promtail installation tasks
+  block:
+    - name: Validate Promtail configuration
+      when: promtail_enabled | bool
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/validate_config.yml"
+
+    - name: Install Promtail
+      when: promtail_enabled | bool
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
   tags:
     - setup-all
     - setup-promtail
     - install-all
     - install-promtail
+
+- name: Perform Promtail uninstallation tasks
   block:
-    - when: promtail_enabled | bool
-      ansible.builtin.include_tasks: "{{ role_path }}/tasks/validate_config.yml"
-
-    - when: promtail_enabled | bool
-      ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
-
-- name: Run Promtail uninstallation tasks
+    - name: Uninstall Promtail
+      when: not promtail_enabled | bool
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"
   tags:
     - setup-all
     - setup-promtail
-  block:
-    - when: not promtail_enabled | bool
-      ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"
