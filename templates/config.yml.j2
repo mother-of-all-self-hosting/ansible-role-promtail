@@ -5,7 +5,6 @@ SPDX-FileCopyrightText: 2024 Tiz
 SPDX-License-Identifier: AGPL-3.0-or-later
 #}
 
-#jinja2: lstrip_blocks: "True"
 server:
   http_listen_port: {{ promtail_config_http_listen_port | int | to_json }}
   grpc_listen_port: {{ promtail_config_grpc_listen_port | int | to_json }}
