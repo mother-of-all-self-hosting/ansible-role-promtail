@@ -4,12 +4,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
-
 - name: Ensure Promtail paths exist
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-    mode: 0700
+    mode: "0700"
     owner: "{{ promtail_uid }}"
     group: "{{ promtail_gid }}"
   with_items:
@@ -21,7 +20,7 @@
   ansible.builtin.copy:
     content: "{{ promtail_configuration | to_nice_yaml(indent=2, width=999999) }}"
     dest: "{{ promtail_config_path }}/config.yml"
-    mode: 0644
+    mode: "0644"
     owner: "{{ promtail_uid }}"
     group: "{{ promtail_gid }}"
 
@@ -31,7 +30,7 @@
     dest: "{{ promtail_base_path }}/{{ item }}"
     owner: "{{ promtail_uid }}"
     group: "{{ promtail_gid }}"
-    mode: 0640
+    mode: "0640"
   with_items:
     - labels
 
@@ -57,4 +56,4 @@
   ansible.builtin.template:
     src: "{{ role_path }}/templates/systemd/promtail.service.j2"
     dest: "{{ devture_systemd_docker_base_systemd_path }}/{{ promtail_identifier }}.service"
-    mode: 0644
+    mode: "0644"

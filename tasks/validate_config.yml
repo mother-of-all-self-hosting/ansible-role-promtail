@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
-
 - name: (Deprecation) Catch and report renamed settings
   ansible.builtin.fail:
     msg: >-
@@ -12,28 +11,32 @@
       Please change your configuration to rename the variable (`{{ item.old }}` -> `{{ item.new }}`).
   when: "item.old in vars"
   with_items:
-    - {'old': 'promtail_basic_auth_enabled', 'new': '<superseded by promtail_container_labels_api_traefik_middleware_basic_auth_enabled and promtail_container_labels_metrics_traefik_middleware_basic_auth_enabled>'}
-    - {'old': 'promtail_basic_auth_username', 'new': '<superseded by promtail_container_labels_api_traefik_middleware_basic_auth_users or promtail_container_labels_metrics_traefik_middleware_basic_auth_users>'}
-    - {'old': 'promtail_basic_auth_password', 'new': '<superseded by promtail_container_labels_api_traefik_middleware_basic_auth_users or promtail_container_labels_metrics_traefik_middleware_basic_auth_users>'}
-    - {'old': 'promtail_container_label_basicauth_users', 'new': '<superseded by promtail_container_labels_api_traefik_middleware_basic_auth_users or promtail_container_labels_metrics_traefik_middleware_basic_auth_users>'}
-    - {'old': 'promtail_default_loki_client_enabled', 'new': '<removed>'}
-    - {'old': 'promtail_default_loki_client', 'new': '<removed>'}
-    - {'old': 'promtail_loki_server_url', 'new': '<removed>'}
-    - {'old': 'promtail_config_scrape', 'new': 'promtail_config_scrape_configs'}
-    - {'old': 'promtail_config_scrape_additional', 'new': 'promtail_config_scrape_configs_custom'}
-    - {'old': 'promtail_config_scrape_varlog_default', 'new': 'promtail_varlog_scraper_config'}
-    - {'old': 'promtail_config_positions', 'new': '<superseded by promtail_config_positions_filename and promtail_configuration_extension_yaml>'}
-    - {'old': 'promtail_target_config', 'new': '<superseded by promtail_configuration_extension_yaml>'}
-    - {'old': 'promtail_config_options', 'new': '<superseded by promtail_configuration_extension_yaml>'}
-    - {'old': 'promtail_config_limits', 'new': '<superseded by promtail_configuration_extension_yaml>'}
-    - {'old': 'promtail_config_tracing', 'new': '<superseded by promtail_configuration_extension_yaml>'}
-    - {'old': 'promtail_config_global', 'new': '<superseded by promtail_configuration_extension_yaml>'}
-    - {'old': 'promtail_config_server', 'new': '<superseded by promtail_configuration_extension_yaml>'}
-    - {'old': 'promtail_container_http_port', 'new': 'promtail_config_server_http_port'}
-    - {'old': 'promtail_container_grpc_port', 'new': 'promtail_config_server_grpc_port'}
-    - {'old': 'promtail_container_additionnal_bind_ports', 'new': '<removed>'}
-    - {'old': 'promtail_tmpfs_size', 'new': '<removed>'}
-    - {'old': 'promtail_container_labels_traefik_hostname', 'new': '<removed>'}
+    - "old": "promtail_basic_auth_enabled"
+      "new": "<superseded by promtail_container_labels_api_traefik_middleware_basic_auth_enabled and promtail_container_labels_metrics_traefik_middleware_basic_auth_enabled>"
+    - "old": "promtail_basic_auth_username"
+      "new": "<superseded by promtail_container_labels_api_traefik_middleware_basic_auth_users or promtail_container_labels_metrics_traefik_middleware_basic_auth_users>"
+    - "old": "promtail_basic_auth_password"
+      "new": "<superseded by promtail_container_labels_api_traefik_middleware_basic_auth_users or promtail_container_labels_metrics_traefik_middleware_basic_auth_users>"
+    - "old": "promtail_container_label_basicauth_users"
+      "new": "<superseded by promtail_container_labels_api_traefik_middleware_basic_auth_users or promtail_container_labels_metrics_traefik_middleware_basic_auth_users>"
+    - { "old": "promtail_default_loki_client_enabled", "new": "<removed>" }
+    - { "old": "promtail_default_loki_client", "new": "<removed>" }
+    - { "old": "promtail_loki_server_url", "new": "<removed>" }
+    - { "old": "promtail_config_scrape", "new": "promtail_config_scrape_configs" }
+    - { "old": "promtail_config_scrape_additional", "new": "promtail_config_scrape_configs_custom" }
+    - { "old": "promtail_config_scrape_varlog_default", "new": "promtail_varlog_scraper_config" }
+    - { "old": "promtail_config_positions", "new": "<superseded by promtail_config_positions_filename and promtail_configuration_extension_yaml>" }
+    - { "old": "promtail_target_config", "new": "<superseded by promtail_configuration_extension_yaml>" }
+    - { "old": "promtail_config_options", "new": "<superseded by promtail_configuration_extension_yaml>" }
+    - { "old": "promtail_config_limits", "new": "<superseded by promtail_configuration_extension_yaml>" }
+    - { "old": "promtail_config_tracing", "new": "<superseded by promtail_configuration_extension_yaml>" }
+    - { "old": "promtail_config_global", "new": "<superseded by promtail_configuration_extension_yaml>" }
+    - { "old": "promtail_config_server", "new": "<superseded by promtail_configuration_extension_yaml>" }
+    - { "old": "promtail_container_http_port", "new": "promtail_config_server_http_port" }
+    - { "old": "promtail_container_grpc_port", "new": "promtail_config_server_grpc_port" }
+    - { "old": "promtail_container_additionnal_bind_ports", "new": "<removed>" }
+    - { "old": "promtail_tmpfs_size", "new": "<removed>" }
+    - { "old": "promtail_container_labels_traefik_hostname", "new": "<removed>" }
 
 - name: Fail if required Promtail settings not defined
   ansible.builtin.fail:
@@ -41,11 +44,13 @@
       You need to define a required configuration setting (`{{ item.name }}`).
   when: "item.when | bool and vars[item.name] == ''"
   with_items:
-    - {'name': 'promtail_container_labels_api_hostname', when: "{{ promtail_container_labels_api_enabled }}"}
-    - {'name': 'promtail_container_labels_api_traefik_middleware_basic_auth_users', when: "{{ promtail_container_labels_traefik_enabled and promtail_container_labels_api_enabled and promtail_container_labels_api_traefik_middleware_basic_auth_enabled }}"}
+    - { "name": "promtail_container_labels_api_hostname", when: "{{ promtail_container_labels_api_enabled }}" }
+    - "name": "promtail_container_labels_api_traefik_middleware_basic_auth_users"
+      when: "{{ promtail_container_labels_traefik_enabled and promtail_container_labels_api_enabled and promtail_container_labels_api_traefik_middleware_basic_auth_enabled }}"
 
-    - {'name': 'promtail_container_labels_metrics_hostname', when: "{{ promtail_container_labels_metrics_enabled }}"}
-    - {'name': 'promtail_container_labels_metrics_traefik_middleware_basic_auth_users', when: "{{ promtail_container_labels_traefik_enabled and promtail_container_labels_metrics_enabled and promtail_container_labels_metrics_traefik_middleware_basic_auth_enabled }}"}
+    - { "name": "promtail_container_labels_metrics_hostname", when: "{{ promtail_container_labels_metrics_enabled }}" }
+    - "name": "promtail_container_labels_metrics_traefik_middleware_basic_auth_users"
+      when: "{{ promtail_container_labels_traefik_enabled and promtail_container_labels_metrics_enabled and promtail_container_labels_metrics_traefik_middleware_basic_auth_enabled }}"
 
 - name: Fail if no Promtail clients are defined
   ansible.builtin.fail:
@@ -53,6 +58,3 @@
       You need to define at least one client (like Grafana Loki) where Promtail would push logs to.
       See `promtail_config_clients_custom`.
   when: "promtail_config_clients | length == 0"
-
-
-
