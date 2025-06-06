@@ -5,6 +5,7 @@
 
 ---
 - name: Perform Promtail installation tasks
+  when: promtail_enabled | bool
   tags:
     - setup-all
     - setup-promtail
@@ -12,17 +13,15 @@
     - install-promtail
   block:
     - name: Validate Promtail configuration
-      when: promtail_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/validate_config.yml"
     - name: Install Promtail
-      when: promtail_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
 
 - name: Perform Promtail uninstallation tasks
+  when: not promtail_enabled | bool
   tags:
     - setup-all
     - setup-promtail
   block:
     - name: Uninstall Promtail
-      when: not promtail_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"
