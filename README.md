@@ -7,7 +7,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 # Promtail Ansible role
 
-This is an [Ansible](https://www.ansible.com/) role which installs [Promtail](https://grafana.com/oss/promtail/) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
+This is an [Ansible](https://www.ansible.com/) role which installs [Promtail](https://grafana.com/docs/loki/latest/send-data/promtail/) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
 
 This role *implicitly* depends on:
 
