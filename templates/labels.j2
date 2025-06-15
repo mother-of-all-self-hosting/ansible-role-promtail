@@ -29,8 +29,8 @@ traefik.http.middlewares.{{ promtail_identifier }}-api-auth.basicauth.users={{ p
 {% endif %}
 
 {#
-	Promtail redirects the root path to /targets, but in a non-path-prefix-aware way.
-	For this reason, we capture root path requests and redirect them ourselves.
+  Promtail redirects the root path to /targets, but in a non-path-prefix-aware way.
+  For this reason, we capture root path requests and redirect them ourselves.
 #}
 traefik.http.middlewares.{{ promtail_identifier }}-api-redirect-root-path.redirectregex.regex=({{ promtail_container_labels_api_path_prefix | quote }})$
 traefik.http.middlewares.{{ promtail_identifier }}-api-redirect-root-path.redirectregex.replacement=${1}/targets
