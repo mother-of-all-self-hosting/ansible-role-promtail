@@ -9,7 +9,7 @@
     msg: >-
       Your configuration contains a variable, which now has a different name.
       Please change your configuration to rename the variable (`{{ item.old }}` -> `{{ item.new }}`).
-  when: "item.old in vars"
+  when: "lookup('ansible.builtin.varnames', ('^' + item.old + '$'), wantlist=True) | length > 0"
   with_items:
     - "old": "promtail_basic_auth_enabled"
       "new": "<superseded by promtail_container_labels_api_traefik_middleware_basic_auth_enabled and promtail_container_labels_metrics_traefik_middleware_basic_auth_enabled>"
@@ -42,7 +42,7 @@
   ansible.builtin.fail:
     msg: >-
       You need to define a required configuration setting (`{{ item.name }}`).
-  when: "item.when | bool and vars[item.name] == ''"
+  when: "item.when | bool and lookup('vars', item.name, default='') | string | length == 0"
   with_items:
     - { "name": "promtail_container_labels_api_hostname", when: "{{ promtail_container_labels_api_enabled }}" }
     - "name": "promtail_container_labels_api_traefik_middleware_basic_auth_users"
