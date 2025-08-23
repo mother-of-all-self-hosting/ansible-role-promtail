@@ -200,7 +200,10 @@ promtail_systemd_required_services_list_auto: []
 promtail_systemd_required_services_list_custom: []
 
 # List of systemd services that the Promtail systemd service wants
-promtail_systemd_wanted_services_list: []
+promtail_systemd_wanted_services_list: "{{ promtail_systemd_wanted_services_list_default + promtail_systemd_wanted_services_list_auto + promtail_systemd_wanted_services_list_custom }}"
+promtail_systemd_wanted_services_list_default: []
+promtail_systemd_wanted_services_list_auto: []
+promtail_systemd_wanted_services_list_custom: []
 
 # Controls whether to run with non-`root` privileges, as specified by `promtail_uid` and `promtail_gid`.
 #
