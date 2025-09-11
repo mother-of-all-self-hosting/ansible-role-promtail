@@ -19,7 +19,7 @@ promtail_config_path: "{{ promtail_base_path }}/config"
 promtail_data_path: "{{ promtail_base_path }}/data"
 
 # renovate: datasource=docker depName=grafana/promtail versioning=semver
-promtail_version: 3.5.4
+promtail_version: 3.5.5
 
 promtail_uid: ''
 promtail_gid: ''
