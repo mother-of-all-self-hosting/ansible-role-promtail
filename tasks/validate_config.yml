@@ -37,6 +37,7 @@
     - { "old": "promtail_container_additionnal_bind_ports", "new": "<removed>" }
     - { "old": "promtail_tmpfs_size", "new": "<removed>" }
     - { "old": "promtail_container_labels_traefik_hostname", "new": "<removed>" }
+    - { "old": "promtail_http_header_content_permission_policy", "new": "promtail_http_header_permissions_policy" }
 
 - name: Fail if required Promtail settings not defined
   ansible.builtin.fail:
