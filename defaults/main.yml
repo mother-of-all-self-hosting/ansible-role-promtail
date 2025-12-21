@@ -27,7 +27,7 @@ promtail_gid: ""
 # The hostname at which Promtail is served.
 promtail_hostname: ""
 
-# The path at which Promtail is exposed.
+# The path at which Promtail is served.
 # This value must either be `/` or not end with a slash (e.g. `/promtail`).
 promtail_path_prefix: '/'
 
