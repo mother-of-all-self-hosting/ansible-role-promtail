@@ -21,11 +21,11 @@ promtail_data_path: "{{ promtail_base_path }}/data"
 # renovate: datasource=docker depName=grafana/promtail versioning=semver
 promtail_version: 3.6.3
 
-promtail_uid: ''
-promtail_gid: ''
+promtail_uid: ""
+promtail_gid: ""
 
 # The hostname at which Promtail is served.
-promtail_hostname: ''
+promtail_hostname: ""
 
 # The path at which Promtail is exposed.
 # This value must either be `/` or not end with a slash (e.g. `/promtail`).
@@ -95,7 +95,7 @@ promtail_container_labels_api_traefik_tls: "{{ promtail_container_labels_traefik
 promtail_container_labels_api_traefik_tls_certResolver: default  # noqa var-naming
 promtail_container_labels_api_traefik_middleware_basic_auth_enabled: false
 # See: https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/basicauth/
-promtail_container_labels_api_traefik_middleware_basic_auth_users: ''
+promtail_container_labels_api_traefik_middleware_basic_auth_users: ""
 
 # Controls if Promtail exposes its /metrics endpoint.
 # We have dedicated labels for this, so that one could easily expose just the metrics while not exposing the whole API.
@@ -110,7 +110,7 @@ promtail_container_labels_metrics_traefik_tls: "{{ promtail_container_labels_tra
 promtail_container_labels_metrics_traefik_tls_certResolver: default  # noqa var-naming
 promtail_container_labels_metrics_traefik_middleware_basic_auth_enabled: false
 # See: https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/basicauth/
-promtail_container_labels_metrics_traefik_middleware_basic_auth_users: ''
+promtail_container_labels_metrics_traefik_middleware_basic_auth_users: ""
 
 # Controls which additional headers to attach to all HTTP requests.
 # To add your own custom request headers, use `promtail_container_labels_traefik_additional_request_headers_custom`
