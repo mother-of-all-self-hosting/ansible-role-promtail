@@ -138,12 +138,11 @@ promtail_container_labels_traefik_additional_response_headers_custom: {}
 #
 # Example:
 # promtail_container_labels_additional_labels_custom: |
-#   my.label=1
-#   another.label="here"
-promtail_container_labels_additional_labels: "{{ promtail_container_labels_additional_labels_auto | combine(promtail_container_labels_additional_labels_custom) }}"
-promtail_container_labels_additional_labels_auto: {}
-promtail_container_labels_additional_labels_custom: {}
-
+#   - my.label=1
+#   - another.label="here"
+promtail_container_labels_additional_labels: "{{ promtail_container_labels_additional_labels_auto + promtail_container_labels_additional_labels_custom }}"
+promtail_container_labels_additional_labels_auto: []
+promtail_container_labels_additional_labels_custom: []
 # Additional arguments to pass to the container-starting/container-preparation command (e.g. `docker run ARGUMENTS` or `docker create ARGUMENTS`).
 promtail_container_extra_arguments: "{{ promtail_container_extra_arguments_auto + promtail_container_extra_arguments_custom }}"
 promtail_container_extra_arguments_auto: []

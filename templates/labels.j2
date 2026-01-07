@@ -108,4 +108,6 @@ traefik.http.routers.{{ promtail_identifier }}-metrics.tls.certResolver={{ promt
 
 {% endif %}
 
-{{ promtail_container_labels_additional_labels }}
+{% for arg in promtail_container_labels_additional_labels %}
+{{ arg }}
+{% endfor %}
