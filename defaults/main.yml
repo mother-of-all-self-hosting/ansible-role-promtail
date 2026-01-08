@@ -137,7 +137,7 @@ promtail_container_labels_traefik_additional_response_headers_custom: {}
 # To add your own custom labels, use `promtail_container_labels_additional_labels_custom`
 #
 # Example:
-# promtail_container_labels_additional_labels_custom: |
+# promtail_container_labels_additional_labels_custom:
 #   - my.label=1
 #   - another.label="here"
 promtail_container_labels_additional_labels: "{{ promtail_container_labels_additional_labels_auto + promtail_container_labels_additional_labels_custom }}"
