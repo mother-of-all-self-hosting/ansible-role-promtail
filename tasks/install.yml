@@ -28,9 +28,9 @@
   ansible.builtin.template:
     src: "{{ role_path }}/templates/{{ item }}.j2"
     dest: "{{ promtail_base_path }}/{{ item }}"
+    mode: "0640"
     owner: "{{ promtail_uid }}"
     group: "{{ promtail_gid }}"
-    mode: "0640"
   with_items:
     - labels
 
