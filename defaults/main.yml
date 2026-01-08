@@ -1,9 +1,9 @@
-# SPDX-FileCopyrightText: 2023 - 2024 Nikita Chernyi
-# SPDX-FileCopyrightText: 2023 - 2025 Slavi Pantaleev
+# SPDX-FileCopyrightText: 2023, 2024 Nikita Chernyi
+# SPDX-FileCopyrightText: 2023-2025 Slavi Pantaleev
 # SPDX-FileCopyrightText: 2024 Sergio Durigan Junior
 # SPDX-FileCopyrightText: 2024 Tiz
 # SPDX-FileCopyrightText: 2025 MASH project contributors
-# SPDX-FileCopyrightText: 2025 Suguru Hirahara
+# SPDX-FileCopyrightText: 2025, 2026 Suguru Hirahara
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -262,6 +262,12 @@ promtail_config_scrape_configs_default: |
   }}
 promtail_config_scrape_configs_auto: []
 promtail_config_scrape_configs_custom: []
+
+# Specify the timezone
+promtail_environment_variables_tz: UTC
+
+# Additional environment variables.
+promtail_environment_variables_additional_variables: ""
 
 ########################################################################
 #                                                                      #
