@@ -16,14 +16,6 @@
     - "{{ promtail_config_path }}"
     - "{{ promtail_data_path }}"
 
-- name: Ensure Promtail configuration file installed
-  ansible.builtin.copy:
-    content: "{{ promtail_configuration | to_nice_yaml(indent=2, width=999999) }}"
-    dest: "{{ promtail_config_path }}/config.yml"
-    mode: "0644"
-    owner: "{{ promtail_uid }}"
-    group: "{{ promtail_gid }}"
-
 - name: Ensure Promtail support file installed
   ansible.builtin.template:
     src: "{{ role_path }}/templates/{{ item }}.j2"
@@ -33,6 +25,14 @@
     group: "{{ promtail_gid }}"
   with_items:
     - labels
+
+- name: Ensure Promtail configuration file installed
+  ansible.builtin.copy:
+    content: "{{ promtail_configuration | to_nice_yaml(indent=2, width=999999) }}"
+    dest: "{{ promtail_config_path }}/config.yml"
+    mode: "0644"
+    owner: "{{ promtail_uid }}"
+    group: "{{ promtail_gid }}"
 
 - name: Ensure Promtail container image is pulled via community.docker.docker_image
   when: devture_systemd_docker_base_container_image_pull_method == 'ansible-module'
