@@ -45,10 +45,13 @@
       You need to define a required configuration setting (`{{ item.name }}`).
   when: "item.when | bool and lookup('vars', item.name, default='') | string | length == 0"
   with_items:
+    - { "name": "promtail_uid", when: true }
+    - { "name": "promtail_gid", when: true }
+    - { "name": "promtail_path_prefix", when: true }
+    - { "name": "promtail_container_network", when: true }
     - { "name": "promtail_container_labels_api_hostname", when: "{{ promtail_container_labels_api_enabled }}" }
     - "name": "promtail_container_labels_api_traefik_middleware_basic_auth_users"
       when: "{{ promtail_container_labels_traefik_enabled and promtail_container_labels_api_enabled and promtail_container_labels_api_traefik_middleware_basic_auth_enabled }}"
-
     - { "name": "promtail_container_labels_metrics_hostname", when: "{{ promtail_container_labels_metrics_enabled }}" }
     - "name": "promtail_container_labels_metrics_traefik_middleware_basic_auth_users"
       when: "{{ promtail_container_labels_traefik_enabled and promtail_container_labels_metrics_enabled and promtail_container_labels_metrics_traefik_middleware_basic_auth_enabled }}"
