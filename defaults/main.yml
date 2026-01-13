@@ -49,7 +49,7 @@ promtail_container_http_host_bind_port: ""
 promtail_container_grpc_host_bind_port: ""
 
 # The base container network. It will be auto-created by this role if it doesn't exist already.
-promtail_container_network: '{{ promtail_identifier }}'
+promtail_container_network: "{{ promtail_identifier }}"
 
 # The ports promtail will use for http/grpc inside the container
 promtail_config_http_listen_port: 9080
