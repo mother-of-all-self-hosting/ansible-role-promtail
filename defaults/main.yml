@@ -40,12 +40,12 @@ promtail_container_image_force_pull: "{{ promtail_container_image.endswith(':lat
 # The base container network. It will be auto-created by this role if it doesn't exist already.
 promtail_container_network: "{{ promtail_identifier }}"
 
-# Controls whether the container exposes its HTTP port (tcp/9080 in the container).
+# Specify how the container publishes its HTTP port (as defined by `promtail_config_http_listen_port`).
 #
 # Takes an "<ip>:<port>" or "<port>" value (e.g. "127.0.0.1:2586"), or empty string to not expose.
 promtail_container_http_host_bind_port: ""
 
-# Controls whether the container exposes its GRPC port (tcp/9081 in the container).
+# Specify how the container publishes its GRPC port (as defined by `promtail_config_grpc_listen_port`).
 #
 # Takes an "<ip>:<port>" or "<port>" value (e.g. "127.0.0.1:2586"), or empty string to not expose.
 promtail_container_grpc_host_bind_port: ""
