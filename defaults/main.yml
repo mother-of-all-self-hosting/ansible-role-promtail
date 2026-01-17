@@ -37,12 +37,12 @@ promtail_container_image_registry_prefix_upstream: "{{ promtail_container_image_
 promtail_container_image_registry_prefix_upstream_default: docker.io/
 promtail_container_image_force_pull: "{{ promtail_container_image.endswith(':latest') }}"
 
-# Controls whether the promtail container exposes its HTTP port (tcp/9080 in the container).
+# Controls whether the container exposes its HTTP port (tcp/9080 in the container).
 #
 # Takes an "<ip>:<port>" or "<port>" value (e.g. "127.0.0.1:2586"), or empty string to not expose.
 promtail_container_http_host_bind_port: ""
 
-# Controls whether the promtail container exposes its GRPC port (tcp/9081 in the container).
+# Controls whether the container exposes its GRPC port (tcp/9081 in the container).
 #
 # Takes an "<ip>:<port>" or "<port>" value (e.g. "127.0.0.1:2586"), or empty string to not expose.
 promtail_container_grpc_host_bind_port: ""
