@@ -49,7 +49,7 @@ ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
       --label-file={{ promtail_base_path }}/labels \
       --mount type=bind,src={{ promtail_config_path }},dst=/etc/promtail,ro \
       --mount type=bind,src={{ promtail_data_path }},dst=/data \
-      {% for mount in promtail_container_additional_mounts %}
+      {% for mount in promtail_container_additional_volumes %}
       --mount {{ mount }} \
       {% endfor %}
       {% for arg in promtail_container_extra_arguments %}

@@ -68,15 +68,15 @@ promtail_container_additional_networks_custom: []
 # if you wish to mount your own files into the container.
 # Contains definition objects like this: `{"type": "bind", "src": "/outside", "dst": "/inside", "options": "readonly"}.
 # See the `--mount` documentation for the `docker run` command.
-promtail_container_additional_mounts: "{{ promtail_container_additional_mounts_default + promtail_container_additional_mounts_auto + promtail_container_additional_mounts_custom }}"
-promtail_container_additional_mounts_default: |
+promtail_container_additional_volumes: "{{ promtail_container_additional_volumes_default + promtail_container_additional_volumes_auto + promtail_container_additional_volumes_custom }}"
+promtail_container_additional_volumes_default: |
   {{
     (promtail_journald_scraper_container_additional_volumes if promtail_journald_scraper_enabled else [])
     +
     (promtail_varlog_scraper_container_additional_volumes if promtail_varlog_scraper_enabled else [])
   }}
-promtail_container_additional_mounts_auto: []
-promtail_container_additional_mounts_custom: []
+promtail_container_additional_volumes_auto: []
+promtail_container_additional_volumes_custom: []
 
 # promtail_container_labels_traefik_enabled controls whether labels to assist a Traefik reverse-proxy will be attached to the container.
 # See `../templates/labels.j2` for details.
