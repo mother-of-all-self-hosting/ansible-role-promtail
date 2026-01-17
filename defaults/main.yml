@@ -64,7 +64,7 @@ promtail_container_additional_networks_custom: []
 # A list of additional "mounts" to be mounted in the container.
 # Contains definition objects like this:
 # promtail_container_additional_mounts:
-# - "type=bind|volume|tmpfs,source=/outside,target=/inside,readonly,bind-propagation=slave"
+# - "type=bind|volume|tmpfs,source=/outside,target=/inside,ro,bind-propagation=slave"
 promtail_container_additional_mounts: "{{ promtail_container_additional_mounts_default + promtail_container_additional_mounts_auto + promtail_container_additional_mounts_custom }}"
 promtail_container_additional_mounts_default: |
   {{
@@ -281,8 +281,8 @@ promtail_journald_scraper_host_path: /var/log/journal
 promtail_journald_scraper_in_container_path: /journal
 
 promtail_journald_scraper_container_additional_volumes:
-  - "type=bind,source={{ promtail_journald_scraper_host_path }},target={{ promtail_journald_scraper_in_container_path }},readonly"
-  - "type=bind,source=/etc/machine-id,target=/etc/machine-id,readonly"
+  - "type=bind,source={{ promtail_journald_scraper_host_path }},target={{ promtail_journald_scraper_in_container_path }},ro"
+  - "type=bind,source=/etc/machine-id,target=/etc/machine-id,ro"
 
 promtail_journald_scraper_config_journal_json: false
 promtail_journald_scraper_config_journal_max_age: 12h
@@ -344,7 +344,7 @@ promtail_varlog_scraper_host_path: /var/log
 promtail_varlog_scraper_in_container_path: /varlog
 
 promtail_varlog_scraper_container_additional_volumes:
-  - "type=bind,source={{ promtail_varlog_scraper_host_path }},target={{ promtail_varlog_scraper_in_container_path }},readonly"
+  - "type=bind,source={{ promtail_varlog_scraper_host_path }},target={{ promtail_varlog_scraper_in_container_path }},ro"
 
 promtail_varlog_scraper_config_labels_path: "{{ promtail_varlog_scraper_in_container_path }}{{ promtail_varlog_scraper_config_labels_path_suffix }}"
 promtail_varlog_scraper_config_labels_path_suffix: /**/*log
