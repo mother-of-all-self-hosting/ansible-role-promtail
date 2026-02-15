@@ -25,21 +25,24 @@
         path: "{{ devture_systemd_docker_base_systemd_path }}/{{ promtail_identifier }}.service"
         state: absent
 
-    - name: Ensure Promtail container network does not exist via community.docker.docker_network
-      when: devture_systemd_docker_base_container_network_creation_method == 'ansible-module'
-      community.docker.docker_network:
-        name: "{{ promtail_container_network }}"
-        state: absent
-      register: promtail_network_deletion_result
+    - name: Ensure Promtail container network does not exist
+      when: promtail_container_network_deletion_enabled
+      block:
+        - name: Ensure Promtail container network does not exist via community.docker.docker_network
+          when: devture_systemd_docker_base_container_network_creation_method == 'ansible-module'
+          community.docker.docker_network:
+            name: "{{ promtail_container_network }}"
+            state: absent
+          register: promtail_network_deletion_result
 
-    - name: Ensure Promtail container network does not exist via ansible.builtin.command
-      when: devture_systemd_docker_base_container_network_creation_method == 'command'
-      ansible.builtin.command:
-        cmd: >-
-          {{ devture_systemd_docker_base_host_command_docker }} network rm
-          {{ promtail_container_network }}
-      register: promtail_network_deletion_result
-      changed_when: promtail_container_network in promtail_network_deletion_result.stdout
+        - name: Ensure Promtail container network does not exist via ansible.builtin.command
+          when: devture_systemd_docker_base_container_network_creation_method == 'command'
+          ansible.builtin.command:
+            cmd: >-
+              {{ devture_systemd_docker_base_host_command_docker }} network rm
+              {{ promtail_container_network }}
+          register: promtail_network_deletion_result
+          changed_when: promtail_container_network in promtail_network_deletion_result.stdout
 
     - name: Ensure Promtail path does not exist
       ansible.builtin.file:
