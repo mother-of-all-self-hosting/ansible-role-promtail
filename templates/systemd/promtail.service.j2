@@ -19,8 +19,7 @@ DefaultDependencies=no
 
 [Service]
 Type=simple
-ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} stop -t {{ devture_systemd_docker_base_container_stop_grace_time_seconds }} {{ promtail_identifier }} 2>/dev/null || true'
-ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} rm {{ promtail_identifier }} 2>/dev/null || true'
+ExecStartPre={{ devture_systemd_docker_base_host_command_sh }} -c 'i=0; while [ "$i" -lt 10 ]; do {{ devture_systemd_docker_base_host_command_docker }} rm -f {{ promtail_identifier }} >/dev/null 2>&1 || true; if ! {{ devture_systemd_docker_base_host_command_docker }} inspect {{ promtail_identifier }} >/dev/null 2>&1; then exit 0; fi; i=$((i + 1)); sleep 1; done; echo "Failed to remove stale container {{ promtail_identifier }}" >&2; exit 1'
 
 {#
     When running with a different user than promtail_uid/promtail_gid, even if that user is root,
