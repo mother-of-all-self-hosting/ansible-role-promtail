@@ -19,8 +19,7 @@ DefaultDependencies=no
 
 [Service]
 Type=simple
-ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} stop -t {{ devture_systemd_docker_base_container_stop_grace_time_seconds }} {{ promtail_identifier }} 2>/dev/null || true'
-ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} rm {{ promtail_identifier }} 2>/dev/null || true'
+ExecStartPre={{ devture_systemd_docker_base_host_command_sh }} -c '{{ promtail_container_cleanup_command | trim | replace("\n", " ") }}'
 
 {#
     When running with a different user than promtail_uid/promtail_gid, even if that user is root,
