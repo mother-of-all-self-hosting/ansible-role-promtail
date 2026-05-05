@@ -35,7 +35,6 @@ promtail_container_image_tag: "{{ promtail_version }}"
 promtail_container_image_registry_prefix: "{{ promtail_container_image_registry_prefix_upstream }}"
 promtail_container_image_registry_prefix_upstream: "{{ promtail_container_image_registry_prefix_upstream_default }}"
 promtail_container_image_registry_prefix_upstream_default: docker.io/
-promtail_container_image_force_pull: "{{ promtail_container_image.endswith(':latest') }}"
 
 # The base container network. It will be auto-created by this role if it doesn't exist already.
 promtail_container_network: "{{ promtail_identifier }}"
