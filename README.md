@@ -7,6 +7,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 # Promtail Ansible role
 
+>[!WARNING]
+> Promtail has reached end-of-life status on March 2, 2026. If you are currently using Promtail, you should plan your [migration to Alloy](https://grafana.com/docs/loki/latest/setup/migrate/migrate-to-alloy/).
+
 This is an [Ansible](https://www.ansible.com/) role which installs [Promtail](https://grafana.com/docs/loki/latest/send-data/promtail/) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
 
 This role *implicitly* depends on:
