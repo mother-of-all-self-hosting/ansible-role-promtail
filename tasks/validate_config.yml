@@ -65,33 +65,26 @@
 - name: Run if Traefik is enabled
   when: promtail_container_labels_traefik_enabled | bool
   block:
-    - name: Fail if Traefik settings required for Promtail are not defined
-      ansible.builtin.fail:
-        msg: >-
-          You need to define a required configuration setting (`{{ item.name }}`).
-      when: "item.when | bool and lookup('vars', item.name, default='') | string | length == 0"
-      with_items:
+    - name: Run if Traefik is enabled for Promtail API
+      when: promtail_container_labels_api_enabled | bool
+      block:
+        - name: Fail if Traefik settings required for Promtail API are not defined
+          ansible.builtin.fail:
+            msg: >-
+              You need to define a required configuration setting (`{{ item.name }}`).
+          when: "item.when | bool and lookup('vars', item.name, default='') | string | length == 0"
+          with_items:
+            - { "name": "promtail_container_labels_api_hostname", when: true }
+            - { "name": "promtail_container_labels_api_traefik_middleware_basic_auth_users", when: "{{ promtail_container_labels_api_traefik_middleware_basic_auth_enabled }}" }
 
-- name: Run if Traefik is enabled for Promtail API
-  when: promtail_container_labels_api_enabled | bool
-  block:
-    - name: Fail if Traefik settings required for Promtail API are not defined
-      ansible.builtin.fail:
-        msg: >-
-          You need to define a required configuration setting (`{{ item.name }}`).
-      when: "item.when | bool and lookup('vars', item.name, default='') | string | length == 0"
-      with_items:
-        - { "name": "promtail_container_labels_api_hostname", when: true }
-        - { "name": "promtail_container_labels_api_traefik_middleware_basic_auth_users", when: "{{ promtail_container_labels_api_traefik_middleware_basic_auth_enabled }}" }
-
-- name: Run if Traefik is enabled for Prometheus endpoint
-  when: promtail_container_labels_metrics_enabled | bool
-  block:
-    - name: Fail if Traefik settings required for Promtail metrics endpoint are not defined
-      ansible.builtin.fail:
-        msg: >-
-          You need to define a required configuration setting (`{{ item.name }}`).
-      when: "item.when | bool and lookup('vars', item.name, default='') | string | length == 0"
-      with_items:
-        - { "name": "promtail_container_labels_metrics_hostname", when: true }
-        - { "name": "promtail_container_labels_metrics_traefik_middleware_basic_auth_users", when: "{{ promtail_container_labels_metrics_traefik_middleware_basic_auth_enabled }}" }
+    - name: Run if Traefik is enabled for Prometheus endpoint
+      when: promtail_container_labels_metrics_enabled | bool
+      block:
+        - name: Fail if Traefik settings required for Promtail metrics endpoint are not defined
+          ansible.builtin.fail:
+            msg: >-
+              You need to define a required configuration setting (`{{ item.name }}`).
+          when: "item.when | bool and lookup('vars', item.name, default='') | string | length == 0"
+          with_items:
+            - { "name": "promtail_container_labels_metrics_hostname", when: true }
+            - { "name": "promtail_container_labels_metrics_traefik_middleware_basic_auth_users", when: "{{ promtail_container_labels_metrics_traefik_middleware_basic_auth_enabled }}" }
