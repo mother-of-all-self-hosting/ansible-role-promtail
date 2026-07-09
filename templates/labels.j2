@@ -14,7 +14,7 @@ traefik.docker.network={{ promtail_container_labels_traefik_docker_network }}
 
 traefik.http.services.{{ promtail_identifier }}.loadbalancer.server.port={{ promtail_config_http_listen_port }}
 
-{% if promtail_container_labels_api_enabled %}
+{% if promtail_container_labels_traefik_api_enabled %}
 ############################################################
 #                                                          #
 # API                                                      #
@@ -23,8 +23,8 @@ traefik.http.services.{{ promtail_identifier }}.loadbalancer.server.port={{ prom
 
 {% set middlewares = [] %}
 
-{% if promtail_container_labels_api_traefik_middleware_basic_auth_enabled %}
-traefik.http.middlewares.{{ promtail_identifier }}-api-auth.basicauth.users={{ promtail_container_labels_api_traefik_middleware_basic_auth_users }}
+{% if promtail_container_labels_traefik_api_traefik_middleware_basic_auth_enabled %}
+traefik.http.middlewares.{{ promtail_identifier }}-api-auth.basicauth.users={{ promtail_container_labels_traefik_api_traefik_middleware_basic_auth_users }}
 {% set middlewares = middlewares + [promtail_identifier + '-api-auth@docker'] %}
 {% endif %}
 
@@ -32,29 +32,29 @@ traefik.http.middlewares.{{ promtail_identifier }}-api-auth.basicauth.users={{ p
   Promtail redirects the root path to /targets, but in a non-path-prefix-aware way.
   For this reason, we capture root path requests and redirect them ourselves.
 #}
-traefik.http.middlewares.{{ promtail_identifier }}-api-redirect-root-path.redirectregex.regex=({{ promtail_container_labels_api_path_prefix | quote }})$
+traefik.http.middlewares.{{ promtail_identifier }}-api-redirect-root-path.redirectregex.regex=({{ promtail_container_labels_traefik_api_path_prefix | quote }})$
 traefik.http.middlewares.{{ promtail_identifier }}-api-redirect-root-path.redirectregex.replacement=${1}/targets
 {% set middlewares = middlewares + [promtail_identifier + '-api-redirect-root-path'] %}
 
-traefik.http.middlewares.{{ promtail_identifier }}-api-strip-prefix.stripprefix.prefixes={{ promtail_container_labels_api_path_prefix }}
+traefik.http.middlewares.{{ promtail_identifier }}-api-strip-prefix.stripprefix.prefixes={{ promtail_container_labels_traefik_api_path_prefix }}
 {% set middlewares = middlewares + [promtail_identifier + '-api-strip-prefix@docker'] %}
 
-traefik.http.routers.{{ promtail_identifier }}-api.rule={{ promtail_container_labels_api_traefik_rule }}
+traefik.http.routers.{{ promtail_identifier }}-api.rule={{ promtail_container_labels_traefik_api_traefik_rule }}
 
 {% if middlewares | length > 0 %}
 traefik.http.routers.{{ promtail_identifier }}-api.middlewares={{ middlewares | join(',') }}
 {% endif %}
 
-{% if promtail_container_labels_api_traefik_priority | int > 0 %}
-traefik.http.routers.{{ promtail_identifier }}-api.priority={{ promtail_container_labels_api_traefik_priority }}
+{% if promtail_container_labels_traefik_api_traefik_priority | int > 0 %}
+traefik.http.routers.{{ promtail_identifier }}-api.priority={{ promtail_container_labels_traefik_api_traefik_priority }}
 {% endif %}
 
 traefik.http.routers.{{ promtail_identifier }}-api.service={{ promtail_identifier }}
-traefik.http.routers.{{ promtail_identifier }}-api.entrypoints={{ promtail_container_labels_api_traefik_entrypoints }}
+traefik.http.routers.{{ promtail_identifier }}-api.entrypoints={{ promtail_container_labels_traefik_api_traefik_entrypoints }}
 
-traefik.http.routers.{{ promtail_identifier }}-api.tls={{ promtail_container_labels_api_traefik_tls | to_json }}
-{% if promtail_container_labels_api_traefik_tls %}
-traefik.http.routers.{{ promtail_identifier }}-api.tls.certResolver={{ promtail_container_labels_api_traefik_tls_certResolver }}
+traefik.http.routers.{{ promtail_identifier }}-api.tls={{ promtail_container_labels_traefik_api_traefik_tls | to_json }}
+{% if promtail_container_labels_traefik_api_traefik_tls %}
+traefik.http.routers.{{ promtail_identifier }}-api.tls.certResolver={{ promtail_container_labels_traefik_api_traefik_tls_certResolver }}
 {% endif %}
 
 ############################################################
