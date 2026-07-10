@@ -64,7 +64,7 @@ traefik.http.routers.{{ promtail_identifier }}-api.tls.certResolver={{ promtail_
 ############################################################
 {% endif %}
 
-{% if promtail_container_labels_metrics_enabled %}
+{% if promtail_container_labels_traefik_metrics_enabled %}
 ############################################################
 #                                                          #
 # Metrics                                                  #
@@ -73,30 +73,30 @@ traefik.http.routers.{{ promtail_identifier }}-api.tls.certResolver={{ promtail_
 
 {% set middlewares = [] %}
 
-{% if promtail_container_labels_metrics_traefik_middleware_basic_auth_enabled %}
-traefik.http.middlewares.{{ promtail_identifier }}-metrics-auth.basicauth.users={{ promtail_container_labels_metrics_traefik_middleware_basic_auth_users }}
+{% if promtail_container_labels_traefik_metrics_traefik_middleware_basic_auth_enabled %}
+traefik.http.middlewares.{{ promtail_identifier }}-metrics-auth.basicauth.users={{ promtail_container_labels_traefik_metrics_traefik_middleware_basic_auth_users }}
 {% set middlewares = middlewares + [promtail_identifier + '-metrics-auth@docker'] %}
 {% endif %}
 
 traefik.http.middlewares.{{ promtail_identifier }}-metrics-replace-path.replacepath.path=/metrics
 {% set middlewares = middlewares + [promtail_identifier + '-metrics-replace-path@docker'] %}
 
-traefik.http.routers.{{ promtail_identifier }}-metrics.rule={{ promtail_container_labels_metrics_traefik_rule }}
+traefik.http.routers.{{ promtail_identifier }}-metrics.rule={{ promtail_container_labels_traefik_metrics_traefik_rule }}
 
 {% if middlewares | length > 0 %}
 traefik.http.routers.{{ promtail_identifier }}-metrics.middlewares={{ middlewares | join(',') }}
 {% endif %}
 
-{% if promtail_container_labels_metrics_traefik_priority | int > 0 %}
-traefik.http.routers.{{ promtail_identifier }}-metrics.priority={{ promtail_container_labels_metrics_traefik_priority }}
+{% if promtail_container_labels_traefik_metrics_traefik_priority | int > 0 %}
+traefik.http.routers.{{ promtail_identifier }}-metrics.priority={{ promtail_container_labels_traefik_metrics_traefik_priority }}
 {% endif %}
 
 traefik.http.routers.{{ promtail_identifier }}-metrics.service={{ promtail_identifier }}
-traefik.http.routers.{{ promtail_identifier }}-metrics.entrypoints={{ promtail_container_labels_metrics_traefik_entrypoints }}
+traefik.http.routers.{{ promtail_identifier }}-metrics.entrypoints={{ promtail_container_labels_traefik_metrics_traefik_entrypoints }}
 
-traefik.http.routers.{{ promtail_identifier }}-metrics.tls={{ promtail_container_labels_metrics_traefik_tls | to_json }}
-{% if promtail_container_labels_metrics_traefik_tls %}
-traefik.http.routers.{{ promtail_identifier }}-metrics.tls.certResolver={{ promtail_container_labels_metrics_traefik_tls_certResolver }}
+traefik.http.routers.{{ promtail_identifier }}-metrics.tls={{ promtail_container_labels_traefik_metrics_traefik_tls | to_json }}
+{% if promtail_container_labels_traefik_metrics_traefik_tls %}
+traefik.http.routers.{{ promtail_identifier }}-metrics.tls.certResolver={{ promtail_container_labels_traefik_metrics_traefik_tls_certResolver }}
 {% endif %}
 
 ############################################################
