@@ -1,8 +1,10 @@
 ---
 galaxy_info:
-  role_name: promtail
   author: sudo-Tiz
-  description: Ansible role to install promtail, a log agent that helps collect and forward logs to a centralized logging system.
+  company: mash
+  role_name: promtail
+  namespace: mash
+  description: Promtail
   platforms:
     - name: Debian
       versions:

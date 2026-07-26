@@ -1,0 +1,53 @@
+# SPDX-FileCopyrightText: 2026 Suguru Hirahara
+# SPDX-FileCopyrightText: 2026 spatterlight
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+---
+- name: Verify Promtail systemd service
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Wait for Promtail service to become active (up to 180s)
+      ansible.builtin.systemd:
+        name: promtail.service
+      register: promtail_service
+      until: promtail_service.status.ActiveState == 'active'
+      retries: 36
+      delay: 5
+
+    - name: Assert Promtail service is active
+      ansible.builtin.assert:
+        that: promtail_service.status.ActiveState == 'active'
+        fail_msg: "promtail.service not active ({{ promtail_service.status.ActiveState }})"
+        success_msg: "promtail.service is active"
+
+    - name: Retrieve Promtail service log for debugging
+      when: promtail_debug_service_enabled | bool
+      ansible.builtin.command:
+        cmd: journalctl -xeu promtail.service
+      changed_when: false
+
+    - name: Wait for Promtail HTTP endpoint to respond (up to 10m)
+      ansible.builtin.uri:
+        url: "http://localhost:9080/targets"
+        method: GET
+        status_code: [200, 302]
+        follow_redirects: none
+      register: promtail_endpoint
+      until: promtail_endpoint.status in [200, 302]
+      retries: 120
+      delay: 5
+
+    - name: Assert Promtail HTTP endpoint responds
+      ansible.builtin.assert:
+        that: promtail_endpoint.status in [200, 302]
+        fail_msg: "Promtail did not respond as expected ({{ promtail_endpoint.status | default('no response') }})"
+        success_msg: "Promtail responded with {{ promtail_endpoint.status }}"
+
+    - name: Show Promtail systemd service status summary
+      ansible.builtin.debug:
+        msg:
+          - "Promtail systemd: {{ promtail_service.status.ActiveState }}"
+          - "Promtail HTTP: {{ promtail_endpoint.status }}"
