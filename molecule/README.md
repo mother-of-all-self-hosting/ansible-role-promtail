@@ -47,7 +47,23 @@ Currently there is one testing scenario available.
 
 ### `default`
 
-Tests a standard Promtail installation.
+Tests a standard Promtail installation, end to end.
+
+Promtail only reads log files and ships them to a Loki, and none of that is
+observable from Promtail alone — one whose delivery never succeeds looks, from
+its own HTTP endpoints, exactly like one that works. So the scenario stands up
+a real Loki as the sink, seeds a log file with a distinctive line, and points
+the role at both. Verification then walks up from liveness to proof of work:
+
+- the `promtail.service` systemd unit becomes active
+- Promtail reports itself ready
+- the running Promtail is the version `promtail_version` asks for, taken from
+  the `promtail_build_info` metric
+- the role's rendered configuration reached the running process, asserted on
+  values that the stock image's fallback configuration cannot produce
+- Promtail discovered the seeded log file as a ready scrape target
+- **the seeded line arrives at Loki**, retrieved through Loki's query API under
+  the job label this scenario configured
 
 ## Running
 

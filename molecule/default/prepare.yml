@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2026 Suguru Hirahara
 # SPDX-FileCopyrightText: 2026 spatterlight
+# SPDX-FileCopyrightText: 2026 Slavi Pantaleev
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -27,3 +28,73 @@
       vars:
         docker_daemon_options:
           storage-driver: vfs
+
+    # The log file that Promtail is pointed at. It is seeded before the role
+    # runs, so that the line is already waiting when Promtail first opens the
+    # file. Promtail starts a new file from the beginning when its positions
+    # file holds no offset for it, and stamps what it reads with the time it
+    # read it, so a line written here still arrives at Loki as a current one.
+    #
+    # It is world-readable because the container reads it through a read-only
+    # bind mount, and this scenario leaves the role at its default of running
+    # the container as root.
+    - name: Ensure the seeded log directory exists for Promtail Molecule tests
+      ansible.builtin.file:
+        path: "{{ promtail_molecule_log_host_path }}"
+        state: directory
+        mode: "0755"
+
+    - name: Ensure the seeded log file exists for Promtail Molecule tests
+      ansible.builtin.copy:
+        dest: "{{ promtail_molecule_log_host_path }}/{{ promtail_molecule_log_filename }}"
+        content: "{{ promtail_molecule_log_line }} written by prepare.yml\n"
+        mode: "0644"
+
+    # Promtail reaches its Loki by container name, so the two need a network in
+    # common. The role attaches to this one through
+    # `promtail_container_additional_networks_custom` and does not create it -
+    # by design, that knob is for networks that already exist.
+    #
+    # `docker` is driven through the CLI rather than through community.docker,
+    # because the linting environment in CI has no collections installed.
+    - name: Ensure the Loki sink network exists for Promtail Molecule tests
+      ansible.builtin.command:
+        cmd: "docker network create {{ promtail_molecule_network_name }}"
+      register: promtail_molecule_network_result
+      changed_when: promtail_molecule_network_result.rc == 0
+      failed_when: >-
+        promtail_molecule_network_result.rc != 0
+        and 'already exists' not in promtail_molecule_network_result.stderr
+
+    - name: Ensure a previous Loki sink is gone for Promtail Molecule tests
+      ansible.builtin.command:
+        cmd: "docker rm --force {{ promtail_molecule_loki_container_name }}"
+      changed_when: false
+      failed_when: false
+
+    # A stock Loki needs no configuration of ours: the image ships a
+    # single-binary configuration backed by local filesystem storage, which is
+    # all that accepting a push and answering a query back needs.
+    - name: Ensure the Loki sink is running for Promtail Molecule tests
+      ansible.builtin.command:
+        cmd: >-
+          docker run --detach
+          --name {{ promtail_molecule_loki_container_name }}
+          --network {{ promtail_molecule_network_name }}
+          --publish 127.0.0.1:{{ promtail_molecule_loki_bind_port }}:3100
+          {{ promtail_molecule_loki_container_image }}
+      changed_when: true
+
+    # Promtail retries a failed push with a backoff that grows to minutes, so a
+    # Loki that is not listening by the time Promtail first ships can delay
+    # delivery well past the point where verify.yml gives up. Waiting for
+    # readiness here keeps that out of the verification.
+    - name: Wait for the Loki sink to become ready for Promtail Molecule tests (up to 5m)
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ promtail_molecule_loki_bind_port }}/ready"
+        method: GET
+        status_code: [200]
+      register: promtail_molecule_loki_ready
+      until: promtail_molecule_loki_ready.status == 200
+      retries: 60
+      delay: 5

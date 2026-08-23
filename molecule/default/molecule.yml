@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2026 Suguru Hirahara
 # SPDX-FileCopyrightText: 2026 spatterlight
+# SPDX-FileCopyrightText: 2026 Slavi Pantaleev
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -31,14 +32,83 @@ provisioner:
         # Helper variables
         promtail_debug_service_enabled: false
 
+        # Promtail does one thing: it reads log files and ships what it finds to
+        # a Loki. Nothing about that job is observable from Promtail alone - a
+        # Promtail whose delivery never succeeds looks, from its own HTTP
+        # endpoints, exactly like one that works.
+        #
+        # So this scenario stands up a real Loki as the sink (see prepare.yml)
+        # and seeds a log file with a line that nothing else could produce.
+        # verify.yml then asks that Loki whether the line arrived, which is the
+        # one probe here that proves Promtail actually did its job.
+        #
+        # Loki and Promtail are both built from grafana/loki, but their release
+        # trains have come apart: Promtail images stop at 3.6.11 (May 2026 -
+        # Promtail is in maintenance mode in favour of Grafana Alloy) while Loki
+        # keeps releasing. The sink is therefore pinned on its own rather than
+        # derived from `promtail_version`, and a current Loki doubles as a check
+        # that this frozen Promtail still interoperates with one.
+        # renovate: datasource=docker depName=grafana/loki
+        promtail_molecule_loki_container_image: docker.io/grafana/loki:3.7.6
+
+        # The container and network names carry both the role and the scenario,
+        # so that they cannot collide with another role's scenario that happens
+        # to share a Docker daemon.
+        promtail_molecule_loki_container_name: promtail-default-loki
+        promtail_molecule_network_name: promtail-default-sink
+
+        # Loki is published on the test container's own loopback, so that
+        # verify.yml can query it over HTTP.
+        promtail_molecule_loki_bind_port: 3100
+
+        # The seeded log file that Promtail is pointed at, on the host side and
+        # as bind-mounted into the container.
+        promtail_molecule_log_host_path: /promtail-molecule-logs
+        promtail_molecule_log_in_container_path: /molecule-logs
+        promtail_molecule_log_filename: seeded.log
+
+        # The line written into that file. It is deliberately unlike anything
+        # this system's own log files contain, so that finding it in Loki cannot
+        # be a coincidence.
+        promtail_molecule_log_line: MOLECULE-PROMTAIL-SEEDED-LINE-4f1c9a4b
+
+        # The stock grafana/promtail image ships a working
+        # /etc/promtail/config.yml of its own: it listens on 9080, scrapes
+        # /var/log/*log under the job name `varlogs`, and pushes to
+        # http://loki:3100. A Promtail that never received this role's
+        # configuration therefore answers /ready, /metrics and even /targets
+        # much like a correctly configured one does.
+        #
+        # This job name is unlike anything that fallback can produce, which is
+        # what lets verify.yml tell a configured Promtail from a merely running
+        # one.
+        promtail_molecule_scraper_job_name: molecule-promtail-seeded
+
         # Variables for Promtail
         promtail_uid: 1000
         promtail_gid: 1000
         promtail_hostname: localhost
         promtail_container_labels_traefik_enabled: false
         promtail_container_http_host_bind_port: 9080
+
+        # The sink network is created by prepare.yml; the role only attaches to
+        # it. This is also what exercises the role's additional-networks knob.
+        promtail_container_additional_networks_custom:
+          - "{{ promtail_molecule_network_name }}"
+
+        # Gives the container the seeded log file to read.
+        promtail_container_additional_volumes_custom:
+          - "type=bind,source={{ promtail_molecule_log_host_path }},target={{ promtail_molecule_log_in_container_path }},ro"
+
         promtail_config_clients_custom:
-          - url: https://example.com/loki/loki/api/v1/push
+          - url: "http://{{ promtail_molecule_loki_container_name }}:3100/loki/api/v1/push"
+
+        promtail_config_scrape_configs_custom:
+          - job_name: "{{ promtail_molecule_scraper_job_name }}"
+            static_configs:
+              - labels:
+                  __path__: "{{ promtail_molecule_log_in_container_path }}/*.log"
+                  job: "{{ promtail_molecule_scraper_job_name }}"
   env:
     # Workaround for https://github.com/ansible/molecule/issues/4391
     ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/..:/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles:~/.ansible/roles
