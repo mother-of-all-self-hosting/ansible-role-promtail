@@ -90,11 +90,7 @@
             | first | default('', true)
           }}
 
-    # The comparison is a prefix match, so that a build suffix appearing
-    # upstream does not fail the scenario. Any leading `v` is stripped from the
-    # role's value first, so that this keeps working if the version values ever
-    # start carrying one.
-    - name: Assert the running Promtail is the version the role asks for
+    - name: Assert the running Promtail is the version this role installs
       ansible.builtin.assert:
         that: >-
           promtail_reported_version.startswith(
