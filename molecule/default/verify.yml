@@ -92,14 +92,9 @@
 
     - name: Assert the running Promtail is the version this role installs
       ansible.builtin.assert:
-        that: >-
-          promtail_reported_version.startswith(
-            promtail_defaults.promtail_version | string | regex_replace('^v', '')
-          )
-        fail_msg: >-
-          Promtail reports version {{ promtail_reported_version | default('none') }},
-          but the role asks for {{ promtail_defaults.promtail_version }}
-        success_msg: "Promtail reports version {{ promtail_reported_version }}"
+        that: promtail_reported_version == (promtail_defaults.promtail_version | string | regex_replace('^v', ''))
+        fail_msg: "Promtail reports {{ promtail_reported_version | default('none') }}, expected {{ promtail_defaults.promtail_version }}"
+        success_msg: "Promtail reports {{ promtail_reported_version }}"
 
     # The configuration the role rendered, read back out of the running process
     # rather than off disk. The stock grafana/promtail image ships a fallback
