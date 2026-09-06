@@ -192,7 +192,7 @@
         fail_msg: "The seeded log line did not reach Loki: {{ promtail_delivered_lines | default('nothing received') }}"
         success_msg: "Promtail shipped the seeded log line to Loki under the configured job label"
 
-    - name: Show Promtail verification summary
+    - name: Show the Promtail verification summary
       ansible.builtin.debug:
         msg:
           - "Promtail systemd: {{ promtail_service.status.ActiveState }}"
