@@ -78,10 +78,10 @@
     - name: Ensure the Loki sink is running for Promtail Molecule tests
       ansible.builtin.command:
         cmd: >-
-          docker run --detach
+          docker run -d
           --name {{ promtail_molecule_loki_container_name }}
           --network {{ promtail_molecule_network_name }}
-          --publish 127.0.0.1:{{ promtail_molecule_loki_bind_port }}:3100
+          -p 127.0.0.1:{{ promtail_molecule_loki_bind_port }}:3100
           {{ promtail_molecule_loki_container_image }}
       changed_when: true
 
