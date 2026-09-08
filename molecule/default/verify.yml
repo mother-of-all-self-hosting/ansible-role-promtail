@@ -42,7 +42,7 @@
     - name: Retrieve the Promtail systemd service log for debugging
       when: promtail_debug_service_enabled | bool
       ansible.builtin.command:
-        cmd: journalctl -xeu promtail.service
+        cmd: journalctl --no-pager --output=cat --unit=promtail.service
       changed_when: false
 
     # A systemd unit reaching "active" only means that `docker start` has not
