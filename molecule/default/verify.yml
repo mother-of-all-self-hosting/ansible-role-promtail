@@ -11,6 +11,8 @@
   gather_facts: false
 
   tasks:
+    - name: Verify that Promtail works
+      block:
     # The role is not included in this playbook, so its defaults are not in
     # scope. Reading defaults/main.yml directly ties the version assertion
     # below.
@@ -205,3 +207,19 @@
           - "Promtail version: {{ promtail_reported_version }}"
           - "Promtail scrape job: {{ promtail_molecule_scraper_job_name }}"
           - "Promtail shipped to Loki under job: {{ promtail_delivered_stream_job }}"
+
+      rescue:
+        # Whatever went wrong, the reason is almost always in the systemd service log.
+        - name: Retrieve the Promtail systemd service log
+          ansible.builtin.command:
+            cmd: journalctl --no-pager --output=cat --unit=promtail.service
+          register: promtail_service_log
+          changed_when: false
+
+        - name: Show the Promtail systemd service log
+          ansible.builtin.debug:
+            var: promtail_service_log.stdout_lines
+
+        - name: Fail because verification did not pass
+          ansible.builtin.fail:
+            msg: "Promtail verification failed. The systemd service log is printed above."
