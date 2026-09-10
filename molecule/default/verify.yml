@@ -13,200 +13,200 @@
   tasks:
     - name: Verify that Promtail works
       block:
-    # The role is not included in this playbook, so its defaults are not in
-    # scope. Reading defaults/main.yml directly ties the version assertion
-    # below.
-    - name: Load the role defaults
-      ansible.builtin.include_vars:
-        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
-        name: promtail_defaults
+        # The role is not included in this playbook, so its defaults are not in
+        # scope. Reading defaults/main.yml directly ties the version assertion
+        # below.
+        - name: Load the role defaults
+          ansible.builtin.include_vars:
+            file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
+            name: promtail_defaults
 
-    - name: Wait for the Promtail systemd service to become active (up to 180s)
-      ansible.builtin.systemd_service:
-        name: promtail.service
-      register: promtail_service
-      until: promtail_service.status.ActiveState == 'active'
-      retries: 36
-      delay: 5
-      # So that giving up is reported by the assertion below rather than as a
-      # wall of systemd unit properties.
-      failed_when: false
+        - name: Wait for the Promtail systemd service to become active (up to 180s)
+          ansible.builtin.systemd_service:
+            name: promtail.service
+          register: promtail_service
+          until: promtail_service.status.ActiveState == 'active'
+          retries: 36
+          delay: 5
+          # So that giving up is reported by the assertion below rather than as a
+          # wall of systemd unit properties.
+          failed_when: false
 
-    # `Restart=always` in the systemd unit means that even a container which crashes
-    # and gets restarted reads as active here, so this is a precondition rather than
-    # a result.
-    - name: Assert the Promtail systemd service is active
-      ansible.builtin.assert:
-        that: promtail_service.status.ActiveState == 'active'
-        fail_msg: "promtail.service is not active ({{ promtail_service.status.ActiveState }})"
-        success_msg: "promtail.service is active"
+        # `Restart=always` in the systemd unit means that even a container which crashes
+        # and gets restarted reads as active here, so this is a precondition rather than
+        # a result.
+        - name: Assert the Promtail systemd service is active
+          ansible.builtin.assert:
+            that: promtail_service.status.ActiveState == 'active'
+            fail_msg: "promtail.service is not active ({{ promtail_service.status.ActiveState }})"
+            success_msg: "promtail.service is active"
 
-    - name: Retrieve the Promtail systemd service log for debugging
-      when: promtail_debug_service_enabled | bool
-      ansible.builtin.command:
-        cmd: journalctl --no-pager --output=cat --unit=promtail.service
-      changed_when: false
+        - name: Retrieve the Promtail systemd service log for debugging
+          when: promtail_debug_service_enabled | bool
+          ansible.builtin.command:
+            cmd: journalctl --no-pager --output=cat --unit=promtail.service
+          changed_when: false
 
-    # A systemd unit reaching "active" only means that `docker start` has not
-    # exited yet. This is the first thing the Promtail process itself has to
-    # answer, so it is where a container that never got going shows up.
-    - name: Wait for Promtail to report itself ready (up to 10m)
-      ansible.builtin.uri:
-        url: "http://localhost:9080/ready"
-        method: GET
-        return_content: true
-      register: promtail_ready
-      until: promtail_ready.status == 200
-      retries: 120
-      delay: 5
+        # A systemd unit reaching "active" only means that `docker start` has not
+        # exited yet. This is the first thing the Promtail process itself has to
+        # answer, so it is where a container that never got going shows up.
+        - name: Wait for Promtail to report itself ready (up to 10m)
+          ansible.builtin.uri:
+            url: "http://localhost:9080/ready"
+            method: GET
+            return_content: true
+          register: promtail_ready
+          until: promtail_ready.status == 200
+          retries: 120
+          delay: 5
 
-    # The body is `Ready`, capitalised - unlike Loki's own /ready, which
-    # answers a lowercase `ready`.
-    - name: Assert Promtail reports itself ready
-      ansible.builtin.assert:
-        that: "'Ready' in promtail_ready.content"
-        fail_msg: "Promtail is not ready: {{ promtail_ready.content | default('no content') }}"
-        success_msg: "Promtail reports itself ready"
+        # The body is `Ready`, capitalised - unlike Loki's own /ready, which
+        # answers a lowercase `ready`.
+        - name: Assert Promtail reports itself ready
+          ansible.builtin.assert:
+            that: "'Ready' in promtail_ready.content"
+            fail_msg: "Promtail is not ready: {{ promtail_ready.content | default('no content') }}"
+            success_msg: "Promtail reports itself ready"
 
-    # Tying the running version to `promtail_version` is what makes this
-    # scenario a real test of the version that Renovate bumps: a bump that
-    # produces an unusable image cannot pass here.
-    #
-    # Promtail has no version API endpoint - the closest thing it offers over
-    # HTTP is the `promtail_build_info` metric, whose `version` label carries
-    # exactly what `promtail --version` prints.
-    - name: Query the metrics exposed by the running Promtail
-      ansible.builtin.uri:
-        url: "http://localhost:9080/metrics"
-        method: GET
-        return_content: true
-      register: promtail_metrics
+        # Tying the running version to `promtail_version` is what makes this
+        # scenario a real test of the version that Renovate bumps: a bump that
+        # produces an unusable image cannot pass here.
+        #
+        # Promtail has no version API endpoint - the closest thing it offers over
+        # HTTP is the `promtail_build_info` metric, whose `version` label carries
+        # exactly what `promtail --version` prints.
+        - name: Query the metrics exposed by the running Promtail
+          ansible.builtin.uri:
+            url: "http://localhost:9080/metrics"
+            method: GET
+            return_content: true
+          register: promtail_metrics
 
-    # A `[{]` character class rather than an escaped brace, because a `\{`
-    # written in a block scalar here does not survive to the regex engine.
-    - name: Determine the version reported by the running Promtail
-      ansible.builtin.set_fact:
-        promtail_reported_version: >-
-          {{
-            promtail_metrics.content
-            | regex_search('promtail_build_info[{][^}]*version="([^"]+)"', '\1')
-            | first | default('', true)
-          }}
+        # A `[{]` character class rather than an escaped brace, because a `\{`
+        # written in a block scalar here does not survive to the regex engine.
+        - name: Determine the version reported by the running Promtail
+          ansible.builtin.set_fact:
+            promtail_reported_version: >-
+              {{
+                promtail_metrics.content
+                | regex_search('promtail_build_info[{][^}]*version="([^"]+)"', '\1')
+                | first | default('', true)
+              }}
 
-    - name: Assert the running Promtail is the version this role installs
-      ansible.builtin.assert:
-        that: promtail_reported_version == (promtail_defaults.promtail_version | string | regex_replace('^v', ''))
-        fail_msg: "Promtail reports {{ promtail_reported_version | default('none') }}, expected {{ promtail_defaults.promtail_version }}"
-        success_msg: "Promtail reports {{ promtail_reported_version }}"
+        - name: Assert the running Promtail is the version this role installs
+          ansible.builtin.assert:
+            that: promtail_reported_version == (promtail_defaults.promtail_version | string | regex_replace('^v', ''))
+            fail_msg: "Promtail reports {{ promtail_reported_version | default('none') }}, expected {{ promtail_defaults.promtail_version }}"
+            success_msg: "Promtail reports {{ promtail_reported_version }}"
 
-    # The configuration the role rendered, read back out of the running process
-    # rather than off disk. The stock grafana/promtail image ships a fallback
-    # /etc/promtail/config.yml that would satisfy every probe above, so the
-    # values below - which only this role's template can produce - are what
-    # distinguishes a configured Promtail from a merely running one.
-    #
-    # The endpoint serves the resolved configuration inside an HTML page. Every
-    # literal asserted here is free of characters that the page escapes, so the
-    # response can be searched as it arrives.
-    - name: Query the configuration the running Promtail loaded
-      ansible.builtin.uri:
-        url: "http://localhost:9080/config"
-        method: GET
-        return_content: true
-      register: promtail_config
+        # The configuration the role rendered, read back out of the running process
+        # rather than off disk. The stock grafana/promtail image ships a fallback
+        # /etc/promtail/config.yml that would satisfy every probe above, so the
+        # values below - which only this role's template can produce - are what
+        # distinguishes a configured Promtail from a merely running one.
+        #
+        # The endpoint serves the resolved configuration inside an HTML page. Every
+        # literal asserted here is free of characters that the page escapes, so the
+        # response can be searched as it arrives.
+        - name: Query the configuration the running Promtail loaded
+          ansible.builtin.uri:
+            url: "http://localhost:9080/config"
+            method: GET
+            return_content: true
+          register: promtail_config
 
-    - name: Assert the role's configuration reached the running Promtail
-      ansible.builtin.assert:
-        that:
-          # What this scenario asked the role to ship to, and to scrape.
-          - "('url: http://' ~ promtail_molecule_loki_container_name ~ ':3100/loki/api/v1/push') in promtail_config.content"
-          - "('job_name: ' ~ promtail_molecule_scraper_job_name) in promtail_config.content"
-          # The role's own defaults, which the fallback configuration does not
-          # share: it positions at /tmp/positions.yaml and disables gRPC.
-          - "('filename: ' ~ promtail_defaults.promtail_config_positions_filename) in promtail_config.content"
-          - "('grpc_listen_port: ' ~ promtail_defaults.promtail_config_grpc_listen_port) in promtail_config.content"
-          # Direct statements that the fallback configuration is not what is
-          # loaded: it pushes to http://loki:3100 and labels its scrape
-          # `varlogs`.
-          - "'http://loki:3100' not in promtail_config.content"
-          - "'varlogs' not in promtail_config.content"
-        fail_msg: "The role's configuration did not reach Promtail"
-        success_msg: "The role's configuration reached Promtail"
+        - name: Assert the role's configuration reached the running Promtail
+          ansible.builtin.assert:
+            that:
+              # What this scenario asked the role to ship to, and to scrape.
+              - "('url: http://' ~ promtail_molecule_loki_container_name ~ ':3100/loki/api/v1/push') in promtail_config.content"
+              - "('job_name: ' ~ promtail_molecule_scraper_job_name) in promtail_config.content"
+              # The role's own defaults, which the fallback configuration does not
+              # share: it positions at /tmp/positions.yaml and disables gRPC.
+              - "('filename: ' ~ promtail_defaults.promtail_config_positions_filename) in promtail_config.content"
+              - "('grpc_listen_port: ' ~ promtail_defaults.promtail_config_grpc_listen_port) in promtail_config.content"
+              # Direct statements that the fallback configuration is not what is
+              # loaded: it pushes to http://loki:3100 and labels its scrape
+              # `varlogs`.
+              - "'http://loki:3100' not in promtail_config.content"
+              - "'varlogs' not in promtail_config.content"
+            fail_msg: "The role's configuration did not reach Promtail"
+            success_msg: "The role's configuration reached Promtail"
 
-    # Configuration reaching the process is still not the same as Promtail
-    # having acted on it. This is the scrape target the role's configuration
-    # asked for, reported as discovered and ready, with the seeded file among
-    # the paths it resolved the glob to.
-    - name: Query the scrape targets the running Promtail discovered
-      ansible.builtin.uri:
-        url: "http://localhost:9080/targets"
-        method: GET
-        return_content: true
-      register: promtail_targets
-      until: >-
-        (promtail_molecule_scraper_job_name ~ ' (1/1 ready)') in promtail_targets.content
-      retries: 24
-      delay: 5
+        # Configuration reaching the process is still not the same as Promtail
+        # having acted on it. This is the scrape target the role's configuration
+        # asked for, reported as discovered and ready, with the seeded file among
+        # the paths it resolved the glob to.
+        - name: Query the scrape targets the running Promtail discovered
+          ansible.builtin.uri:
+            url: "http://localhost:9080/targets"
+            method: GET
+            return_content: true
+          register: promtail_targets
+          until: >-
+            (promtail_molecule_scraper_job_name ~ ' (1/1 ready)') in promtail_targets.content
+          retries: 24
+          delay: 5
 
-    - name: Assert Promtail discovered the scrape target the role configured
-      ansible.builtin.assert:
-        that:
-          - "(promtail_molecule_scraper_job_name ~ ' (1/1 ready)') in promtail_targets.content"
-          - "(promtail_molecule_log_in_container_path ~ '/' ~ promtail_molecule_log_filename) in promtail_targets.content"
-        fail_msg: "Promtail did not report the configured scrape target as ready"
-        success_msg: "Promtail scrapes the seeded log file the role pointed it at"
+        - name: Assert Promtail discovered the scrape target the role configured
+          ansible.builtin.assert:
+            that:
+              - "(promtail_molecule_scraper_job_name ~ ' (1/1 ready)') in promtail_targets.content"
+              - "(promtail_molecule_log_in_container_path ~ '/' ~ promtail_molecule_log_filename) in promtail_targets.content"
+            fail_msg: "Promtail did not report the configured scrape target as ready"
+            success_msg: "Promtail scrapes the seeded log file the role pointed it at"
 
-    # Everything above proves that Promtail is running, holds the role's
-    # configuration and has opened the right file. This proves that it does its
-    # job: the seeded line made it out of Promtail, across the network, and into
-    # a Loki that can hand it back. Shipping is asynchronous and batched, so the
-    # query is retried until the line shows up.
-    - name: Wait for the seeded log line to arrive at Loki (up to 3m)
-      ansible.builtin.uri:
-        url: >-
-          http://127.0.0.1:{{ promtail_molecule_loki_bind_port }}/loki/api/v1/query_range?limit=100&query={{
-            ('{job="' ~ promtail_molecule_scraper_job_name ~ '"}') | urlencode
-          }}
-        method: GET
-        return_content: true
-      register: promtail_loki_query
-      until: >-
-        promtail_molecule_log_line in (
-          promtail_loki_query.json.data.result | default([])
-          | map(attribute='values') | flatten | join(' ')
-        )
-      retries: 36
-      delay: 5
+        # Everything above proves that Promtail is running, holds the role's
+        # configuration and has opened the right file. This proves that it does its
+        # job: the seeded line made it out of Promtail, across the network, and into
+        # a Loki that can hand it back. Shipping is asynchronous and batched, so the
+        # query is retried until the line shows up.
+        - name: Wait for the seeded log line to arrive at Loki (up to 3m)
+          ansible.builtin.uri:
+            url: >-
+              http://127.0.0.1:{{ promtail_molecule_loki_bind_port }}/loki/api/v1/query_range?limit=100&query={{
+                ('{job="' ~ promtail_molecule_scraper_job_name ~ '"}') | urlencode
+              }}
+            method: GET
+            return_content: true
+          register: promtail_loki_query
+          until: >-
+            promtail_molecule_log_line in (
+              promtail_loki_query.json.data.result | default([])
+              | map(attribute='values') | flatten | join(' ')
+            )
+          retries: 36
+          delay: 5
 
-    - name: Determine the log lines Loki received from Promtail
-      ansible.builtin.set_fact:
-        promtail_delivered_lines: >-
-          {{
-            promtail_loki_query.json.data.result | default([])
-            | map(attribute='values') | flatten | join(' ')
-          }}
-        promtail_delivered_stream_job: >-
-          {{
-            promtail_loki_query.json.data.result | default([])
-            | map(attribute='stream.job') | first | default('', true)
-          }}
+        - name: Determine the log lines Loki received from Promtail
+          ansible.builtin.set_fact:
+            promtail_delivered_lines: >-
+              {{
+                promtail_loki_query.json.data.result | default([])
+                | map(attribute='values') | flatten | join(' ')
+              }}
+            promtail_delivered_stream_job: >-
+              {{
+                promtail_loki_query.json.data.result | default([])
+                | map(attribute='stream.job') | first | default('', true)
+              }}
 
-    - name: Assert Promtail shipped the seeded log line to Loki
-      ansible.builtin.assert:
-        that:
-          - promtail_loki_query.json.status == 'success'
-          - promtail_molecule_log_line in promtail_delivered_lines
-          - promtail_delivered_stream_job == promtail_molecule_scraper_job_name
-        fail_msg: "The seeded log line did not reach Loki: {{ promtail_delivered_lines | default('nothing received') }}"
-        success_msg: "Promtail shipped the seeded log line to Loki under the configured job label"
+        - name: Assert Promtail shipped the seeded log line to Loki
+          ansible.builtin.assert:
+            that:
+              - promtail_loki_query.json.status == 'success'
+              - promtail_molecule_log_line in promtail_delivered_lines
+              - promtail_delivered_stream_job == promtail_molecule_scraper_job_name
+            fail_msg: "The seeded log line did not reach Loki: {{ promtail_delivered_lines | default('nothing received') }}"
+            success_msg: "Promtail shipped the seeded log line to Loki under the configured job label"
 
-    - name: Show the Promtail verification summary
-      ansible.builtin.debug:
-        msg:
-          - "Promtail systemd: {{ promtail_service.status.ActiveState }}"
-          - "Promtail version: {{ promtail_reported_version }}"
-          - "Promtail scrape job: {{ promtail_molecule_scraper_job_name }}"
-          - "Promtail shipped to Loki under job: {{ promtail_delivered_stream_job }}"
+        - name: Show the Promtail verification summary
+          ansible.builtin.debug:
+            msg:
+              - "Promtail systemd: {{ promtail_service.status.ActiveState }}"
+              - "Promtail version: {{ promtail_reported_version }}"
+              - "Promtail scrape job: {{ promtail_molecule_scraper_job_name }}"
+              - "Promtail shipped to Loki under job: {{ promtail_delivered_stream_job }}"
 
       rescue:
         # Whatever went wrong, the reason is almost always in the systemd service log.
