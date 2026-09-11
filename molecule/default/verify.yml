@@ -10,6 +10,10 @@
   become: true
   gather_facts: false
 
+  vars:
+    promtail_verify_units:
+      - promtail.service
+
   tasks:
     - name: Verify that Promtail works
       block:
@@ -21,13 +25,14 @@
             file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
             name: promtail_defaults
 
-        - name: Wait for the Promtail systemd service to become active (up to 180s)
+        - name: Wait for the Promtail systemd services to become active (up to 180s each)
           ansible.builtin.systemd_service:
-            name: promtail.service
-          register: promtail_service
-          until: promtail_service.status.ActiveState == 'active'
+            name: "{{ item }}"
+          register: promtail_services
+          until: promtail_services.status.ActiveState == 'active'
           retries: 36
           delay: 5
+          loop: "{{ promtail_verify_units }}"
           # So that giving up is reported by the assertion below rather than as a
           # wall of systemd unit properties.
           failed_when: false
@@ -35,17 +40,20 @@
         # `Restart=always` in the systemd unit means that even a container which crashes
         # and gets restarted reads as active here, so this is a precondition rather than
         # a result.
-        - name: Assert the Promtail systemd service is active
+        - name: Assert the Promtail systemd services are active
           ansible.builtin.assert:
-            that: promtail_service.status.ActiveState == 'active'
-            fail_msg: "promtail.service is not active ({{ promtail_service.status.ActiveState }})"
-            success_msg: "promtail.service is active"
+            that: promtail_services.results | map(attribute='status.ActiveState') | unique | list == ['active']
+            fail_msg: >-
+              Not every service is active:
+              {{ dict(promtail_verify_units | zip(promtail_services.results | map(attribute='status.ActiveState'))) }}
+            success_msg: "Every systemd service is active"
 
-        - name: Retrieve the Promtail systemd service log for debugging
+        - name: Retrieve the Promtail systemd services log for debugging
           when: promtail_debug_service_enabled | bool
           ansible.builtin.command:
-            cmd: journalctl --no-pager --output=cat --unit=promtail.service
+            cmd: "journalctl --no-pager --output=cat --unit={{ item }}"
           changed_when: false
+          loop: "{{ promtail_verify_units }}"
 
         # A systemd unit reaching "active" only means that `docker start` has not
         # exited yet. This is the first thing the Promtail process itself has to
@@ -203,7 +211,7 @@
         - name: Show the Promtail verification summary
           ansible.builtin.debug:
             msg:
-              - "Promtail systemd: {{ promtail_service.status.ActiveState }}"
+              - "Promtail systemd: {% for unit, state in promtail_verify_units | zip(promtail_services.results | map(attribute='status.ActiveState')) %}{{ unit }} ({{ state }}){% if not loop.last %}, {% endif %}{% endfor %}"
               - "Promtail version: {{ promtail_reported_version }}"
               - "Promtail scrape job: {{ promtail_molecule_scraper_job_name }}"
               - "Promtail shipped to Loki under job: {{ promtail_delivered_stream_job }}"
