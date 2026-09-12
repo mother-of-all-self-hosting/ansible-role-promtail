@@ -73,7 +73,7 @@
         - name: Assert Promtail reports itself ready
           ansible.builtin.assert:
             that: "'Ready' in promtail_ready.content"
-            fail_msg: "Promtail is not ready: {{ promtail_ready.content | default('no content') }}"
+            fail_msg: "Promtail did not report it was ready: {{ promtail_ready.content | default('no response') }}"
             success_msg: "Promtail reports itself ready"
 
         # Tying the running version to `promtail_version` is what makes this
