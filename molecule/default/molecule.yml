@@ -31,6 +31,7 @@ provisioner:
       all:
         # Helper variables
         promtail_debug_service_enabled: false
+        promtail_restarts_check_enabled: true
 
         # Promtail does one thing: it reads log files and ships what it finds to
         # a Loki. Nothing about that job is observable from Promtail alone - a
