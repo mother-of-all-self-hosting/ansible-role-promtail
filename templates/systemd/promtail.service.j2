@@ -54,7 +54,10 @@ ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
       {% for arg in promtail_container_extra_arguments %}
       {{ arg }} \
       {% endfor %}
-      {{ promtail_container_image }}
+      {{ promtail_container_image }} \
+      {% for arg in promtail_process_extra_arguments %}
+      {{ arg }} \
+      {% endfor %}
 
 {% for network in promtail_container_additional_networks %}
 ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} network connect {{ network }} {{ promtail_identifier }}
