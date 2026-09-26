@@ -48,33 +48,35 @@ promtail_enabled: true
 
 ### Configuring scrapers
 
-**No scrapers are enabled by default**. As such, Promtail does not do anything in its default configuration.
+Because **no scrapers are enabled** by default, Promtail does not do anything in its default configuration.
 
-Below, we show you a few built-in scrapers you can easily enable, as well as how to create your own custom ones.
+Refer to the sections below for configuring some of the built-in scrapers you can easily enable, as well as how to create your own custom ones.
 
 #### Scraping systemd-journald logs
 
-To scrape the [systemd Journal](https://wiki.archlinux.org/title/Systemd/Journal), enable the already-prepared scraper for this with this additional `vars.yml` configuration:
+To scrape the [systemd Journal](https://wiki.archlinux.org/title/Systemd/Journal), enable the already-prepared scraper by adding the following configuration to your `vars.yml` file:
 
 ```yml
-# Some distros only store a non-persistent (in-memory) journal in a path like in `/run/log/journal`.
-# Others may be using a path different than `/var/log/journal`.
-# Adjust accordingly.
 promtail_journald_scraper_enabled: true
+
 promtail_journald_scraper_host_path: /var/log/journal
 ```
 
+>[!NOTE]
+> Some distros only store a non-persistent (in-memory) journal in a path like in `/run/log/journal`. Others may be using a path different than `/var/log/journal`.
+
 #### Scraping textual log files (/var/log, etc.)
 
-A lot of distros dump textual log files in `/var/log`. To scrape them, enable the already-prepared scraper for this with this additional `vars.yml` configuration:
+A lot of distros dump textual log files in `/var/log`. To scrape them, enable the already-prepared scraper by adding the following configuration to your `vars.yml` file:
 
 ```yml
 promtail_varlog_scraper_enabled: true
+
 # Consider adjusting this if you'd like to scrape a different path
 # promtail_varlog_scraper_host_path: /var/log
 ```
 
-You can see the configuration for this scraper in the `promtail_varlog_scraper_config` variable in [the `defaults/main.yml` file](https://github.com/mother-of-all-self-hosting/ansible-role-promtail/blob/main/defaults/main.yml) of the ansible-role-promtail Ansible role.
+Refer to [`defaults/main.yml`](../defaults/main.yml) for the configuration for this scraper in the `promtail_varlog_scraper_config` variable.
 
 When using this scraper, beware that **log-rotation may lead to double-ingestion** as described [here](https://grafana.com/docs/loki/latest/send-data/promtail/configuration/#example-static-config) in the official documentation:
 
@@ -116,7 +118,7 @@ The following example demonstrates the use of rsyslog and promtail to scrape sys
 
 The port is a port number that you come up with yourself (e.g. `1234`).
 
-First, you need a custom scrape configuration which tells Promtail to listen on this port (replace `SOME_PORT_NUMBER_IN_CONTAINER` with your port number of choice):
+First, you need a custom scrape configuration which tells Promtail to listen on this port (replace `SOME_PORT_NUMBER_IN_CONTAINER` with your port number of choice) by adding the following configuration to your `vars.yml` file:
 
 ```yaml
 promtail_config_scrape_configs_custom:
@@ -151,9 +153,7 @@ promtail_container_extra_arguments_custom:
 
 ### Configuring clients
 
-If you've also enabled [Grafana Loki](grafana-loki.md) on the same server, Promtail will automatically be configured to push logs to it.
-
-Otherwise, you will need to extend the Promtail configuration by specifying clients to push to. Add something like this to your `vars.yml` configuration:
+To get Promtail push logs to Grafana Loki, you need to extend the Promtail configuration by specifying clients to push to. Add something as belo to your `vars.yml` configuration:
 
 ```yml
 promtail_config_clients_custom:
@@ -163,7 +163,7 @@ promtail_config_clients_custom:
     tenant_id: some-tenant-id-here
 ```
 
-For more information about configuring clients, see the [Promtail `clients` configuration reference](https://grafana.com/docs/loki/latest/send-data/promtail/configuration/#clients).
+For more information about configuring clients, refer to the [Promtail `clients` configuration reference](https://grafana.com/docs/loki/latest/send-data/promtail/configuration/#clients).
 
 ### Exposing the web interface
 
@@ -172,11 +172,21 @@ There are 2 reasons to expose Promtail to the public web:
 1. So that you can scrape its Prometheus-compatible `/metrics` endpoint or observe its current `/targets` via API
 2. So that you can use [loki_push_api](https://grafana.com/docs/loki/latest/send-data/promtail/configuration/#loki_push_api) and push logs to Promtail (so that it can forward them onto its [clients](#configuring-clients)). This feature likely needs to be enabled explicitly.
 
-To expose Promtail to the web, you need to assign a hostname in `promtail_hostname` and optionally a path-prefix.
+By default, the Promtail instance is not exposed externally.
 
-You can then decide whether you'd like to expose Promtail's whole API via `promtail_container_labels_traefik_api_enabled` or just its metrics endpoint via `promtail_container_labels_traefik_metrics_enabled`.
+To expose it to the internet, add the following configuration to your `vars.yml` file. Make sure to replace `example.com` with your own value.
 
-Consult the `defaults/main.yml` file for variables related to these.
+```yaml
+promtail_hostname: "example.com"
+
+# Expose Promtail's whole API
+promtail_container_labels_traefik_api_enabled: true
+
+# Expose just its metrics endpoint
+promtail_container_labels_traefik_metrics_enabled: true
+```
+
+After adjusting the hostname, make sure to adjust your DNS records to point the domain to your server.
 
 When exposing metrics, and especially the whole API, it's important to protected them. The Promtail Ansible role has variables that let you easily set up [HTTP Basic Authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication) via `promtail_container_labels_traefik_api_traefik_middleware_basic_auth_*` and `promtail_container_labels_traefik_metrics_traefik_middleware_basic_auth_*` variables.
 
@@ -200,7 +210,7 @@ If you use the MASH playbook, the shortcut commands with the [`just` program](ht
 
 ## Usage
 
-After running the command for installation, Promtail becomes available at the specified hostname like `https://example.com`. To use it, open the URL on the browser and create an account.
+After running the command for installation, Promtail becomes available.
 
 ## Troubleshooting
 
