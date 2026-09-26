@@ -78,9 +78,9 @@ promtail_varlog_scraper_enabled: true
 
 Refer to [`defaults/main.yml`](../defaults/main.yml) for the configuration for this scraper in the `promtail_varlog_scraper_config` variable.
 
-When using this scraper, beware that **log-rotation may lead to double-ingestion** as described [here](https://grafana.com/docs/loki/latest/send-data/promtail/configuration/#example-static-config) in the official documentation:
+When using this scraper, beware that **log-rotation may lead to double-ingestion** as described on [this page](https://grafana.com/docs/loki/latest/send-data/promtail/configuration/#example-static-config) in the official documentation:
 
-> If you are rotating logs, be careful when using a wildcard pattern like *.log, and make sure it doesn’t match the rotated log file. For example, if you move your logs from server.log to server.01-01-1970.log in the same directory every night, a static config with a wildcard search pattern like *.log will pick up that new file and read it, effectively causing the entire days logs to be re-ingested.
+> If you are rotating logs, be careful when using a wildcard pattern like `*.log`, and make sure it doesn’t match the rotated log file. For example, if you move your logs from server.log to server.01-01-1970.log in the same directory every night, a static config with a wildcard search pattern like *.log will pick up that new file and read it, effectively causing the entire days logs to be re-ingested.
 
 To work around it, you may wish to adjust `promtail_varlog_scraper_config_labels_path_suffix` which defaults to `/**/*log`.
 
@@ -112,7 +112,7 @@ The following example demonstrates the use of rsyslog and promtail to scrape sys
 
 **Prerequisites**: Edit your rsyslog configuration in order to send logs to `promtail.*`. This could be done by creating a `/etc/rsyslog.d/00-promtail-relay.conf` file with the following content:
 
-```
+```txt
 *.* action(type="omfwd" protocol="tcp" target="<promtail_host>" port="<promtail_port>" Template="RSYSLOG_SyslogProtocol23Format" TCP_Framing="octet-counted" KeepAlive="on")
 ```
 
