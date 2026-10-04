@@ -25,9 +25,6 @@
     - name: Ensure Docker is installed for Promtail Molecule tests preparation
       ansible.builtin.include_role:
         name: ansible-role-docker
-      vars:
-        docker_daemon_options:
-          storage-driver: vfs
 
     # The log file that Promtail is pointed at. It is seeded before the role
     # runs, so that the line is already waiting when Promtail first opens the
