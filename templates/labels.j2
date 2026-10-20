@@ -15,11 +15,11 @@ traefik.docker.network={{ promtail_container_labels_traefik_docker_network }}
 traefik.http.services.{{ promtail_identifier }}.loadbalancer.server.port={{ promtail_config_http_listen_port }}
 
 {% if promtail_container_labels_traefik_api_enabled %}
-############################################################
-#                                                          #
-# API                                                      #
-#                                                          #
-############################################################
+########################################################################
+#                                                                      #
+# API                                                                  #
+#                                                                      #
+########################################################################
 
 {% set middlewares = [] %}
 
@@ -57,19 +57,19 @@ traefik.http.routers.{{ promtail_identifier }}-api.tls={{ promtail_container_lab
 traefik.http.routers.{{ promtail_identifier }}-api.tls.certResolver={{ promtail_container_labels_traefik_api_traefik_tls_certResolver }}
 {% endif %}
 
-############################################################
-#                                                          #
-# /API                                                     #
-#                                                          #
-############################################################
+########################################################################
+#                                                                      #
+# /API                                                                 #
+#                                                                      #
+########################################################################
 {% endif %}
 
 {% if promtail_container_labels_traefik_metrics_enabled %}
-############################################################
-#                                                          #
-# Metrics                                                  #
-#                                                          #
-############################################################
+########################################################################
+#                                                                      #
+# Metrics                                                              #
+#                                                                      #
+########################################################################
 
 {% set middlewares = [] %}
 
@@ -99,11 +99,11 @@ traefik.http.routers.{{ promtail_identifier }}-metrics.tls={{ promtail_container
 traefik.http.routers.{{ promtail_identifier }}-metrics.tls.certResolver={{ promtail_container_labels_traefik_metrics_traefik_tls_certResolver }}
 {% endif %}
 
-############################################################
-#                                                          #
-# /Metrics                                                 #
-#                                                          #
-############################################################
+########################################################################
+#                                                                      #
+# /Metrics                                                             #
+#                                                                      #
+########################################################################
 {% endif %}
 
 {% endif %}
