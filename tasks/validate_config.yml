@@ -68,8 +68,6 @@
   with_items:
     - promtail_uid
     - promtail_gid
-    - promtail_path_prefix
-    - promtail_container_network
 
 - name: Fail if no Promtail clients are defined
   ansible.builtin.fail:
